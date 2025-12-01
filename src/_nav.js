@@ -38,51 +38,9 @@ const _nav = [
     items: [
       {
         component: CNavItem,
-        name: 'Create Project',
-        to: '/production/create-project',
+        name: 'Projects Hierarchy',
+        to: '/production/treeview',
         icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
-      },
-      {
-        component: CNavItem,
-        name: 'Add Set',
-        to: '/production/add-set',
-        icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
-      },
-      {
-        component: CNavItem,
-        name: 'Create Meeting',
-        to: '/production/create-meeting',
-        icon: <CIcon icon={cilBolt} customClassName="nav-icon" />,
-      },
-      {
-        component: CNavItem,
-        name: 'Add Assembly Parts',
-        to: '/production/add-assy-parts',
-        icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
-      },
-      {
-        component: CNavItem,
-        name: 'Add Status',
-        to: '/production/add-status',
-        icon: <CIcon icon={cilChart} customClassName="nav-icon" />,
-      },
-      {
-        component: CNavItem,
-        name: 'Add PRM Status',
-        to: '/production/add-prm-status',
-        icon: <CIcon icon={cilChart} customClassName="nav-icon" />,
-      },
-      {
-        component: CNavItem,
-        name: 'Add Critical Issue',
-        to: '/production/add-critical-issue',
-        icon: <CIcon icon={cilWarning} customClassName="nav-icon" />,
-      },
-      {
-        component: CNavItem,
-        name: 'Project Summary',
-        to: '/production/project-summary',
-        icon: <CIcon icon={cilFactory} customClassName="nav-icon" />,
       },
     ],
   },
