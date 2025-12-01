@@ -6,6 +6,25 @@ const initialState = {
   sidebarUnfoldable: false,
   theme: 'light',
   activeModule: 'dashboard',
+  activeProjectId: null,
+  projects: [
+    {
+      id: 'proj-001',
+      name: 'Phoenix Missile',
+      code: 'PX-001',
+      description: 'Baseline airframe with electrical and composite work packages.',
+      status: 'In Configuration',
+      owner: 'Systems Team',
+    },
+    {
+      id: 'proj-002',
+      name: 'Sentinel UAV',
+      code: 'SN-204',
+      description: 'Surveillance platform focused on propulsion and avionics integration.',
+      status: 'In Production',
+      owner: 'Flight Test',
+    },
+  ],
   selection: {
     project: null,
     set: null,
@@ -19,6 +38,16 @@ const changeState = (state = initialState, { type, ...rest }) => {
   switch (type) {
     case 'set':
       return { ...state, ...rest }
+    case 'addProject': {
+      const newProject = rest.project
+      return {
+        ...state,
+        projects: [...state.projects, newProject],
+        activeProjectId: newProject.id,
+      }
+    }
+    case 'setActiveProject':
+      return { ...state, activeProjectId: rest.projectId }
     case 'updateSelection':
       return { ...state, selection: { ...state.selection, ...rest.selection } }
     default:
