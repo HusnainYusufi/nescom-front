@@ -1,249 +1,166 @@
 // src/components/AppSidebar.js
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   CSidebar,
   CSidebarHeader,
   CSidebarNav,
-  CNavTitle,
-  CFormSelect,
+  CSidebarToggler,
   CCard,
   CCardBody,
-  CSidebarToggler,
+  CBadge,
+  CAccordion,
+  CAccordionItem,
+  CAccordionHeader,
+  CAccordionBody,
+  CNavTitle,
+  CButton,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
   cilFactory,
-  cilLayers,
   cilSettings,
   cilClipboard,
   cilMoney,
-  cilSpeedometer,
+  cilChevronRight,
+  cilChevronBottom,
+  cilFolderOpen,
+  cilLayers,
 } from '@coreui/icons'
 import { useSelector, useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 
 const AppSidebar = () => {
   const dispatch = useDispatch()
   const sidebarShow = useSelector((state) => state.sidebarShow)
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const activeModule = useSelector((state) => state.activeModule)
+  const projects = useSelector((state) => state.projects)
+  const activeProjectId = useSelector((state) => state.activeProjectId)
+  const navigate = useNavigate()
 
-  // ─── Mock Data ───
-  const mockProductionData = [
-    {
-      project: 'S2',
-      sets: [
-        {
-          name: 'S3',
-          components: [
-            {
-              name: 'Electrical',
-              assemblies: [{ name: 'Main Wiring', parts: ['E-01', 'E-02'] }],
-            },
-            {
-              name: 'Structure',
-              assemblies: [
-                { name: 'NOSE', parts: ['N-01', 'N-02'] },
-                { name: 'FEC', parts: ['F-01', 'F-02', 'F-03'] },
-                { name: 'WH', parts: ['W-01', 'W-02'] },
-                { name: 'IC', parts: ['I-01'] },
-                { name: 'TCS', parts: ['T-01', 'T-02'] },
-              ],
-            },
-            { name: 'Composite', assemblies: [{ name: 'Shell Integration', parts: ['C-01', 'C-02'] }] },
-            { name: 'Pyros', assemblies: [{ name: 'Ignition System', parts: ['P-01', 'P-02'] }] },
-            { name: 'GNC', assemblies: [{ name: 'Guidance Module', parts: ['G-01', 'G-02'] }] },
-          ],
-        },
-      ],
-    },
-  ]
+  // Expand currently active project by default
+  const [openProjects, setOpenProjects] = useState(() =>
+    activeProjectId ? [activeProjectId] : projects.length ? [projects[0].id] : [],
+  )
 
-  const mockFinancialData = [
-    {
-      project: '2025 R&D Budget',
-      departments: [
-        { name: 'Engineering', expenses: ['Procurement', 'Testing'] },
-        { name: 'Operations', expenses: ['Maintenance', 'Logistics'] },
-      ],
-    },
-  ]
-
-  // ─── State ───
-  const [selectedProject, setSelectedProject] = useState('')
-  const [selectedSet, setSelectedSet] = useState('')
-  const [selectedComponent, setSelectedComponent] = useState('')
-  const [selectedAssembly, setSelectedAssembly] = useState('')
-  const [selectedPart, setSelectedPart] = useState('')
-
-  // ─── Lookup Helpers ───
-  const currentProject = mockProductionData.find((p) => p.project === selectedProject)
-  const currentSet = currentProject?.sets.find((s) => s.name === selectedSet)
-  const currentComponent = currentSet?.components.find((c) => c.name === selectedComponent)
-  const currentAssembly = currentComponent?.assemblies.find((a) => a.name === selectedAssembly)
-
-  // ─── 🔄 Dispatch selection to Redux whenever changed ───
   useEffect(() => {
-    dispatch({
-      type: 'updateSelection',
-      selection: {
-        project: selectedProject || null,
-        set: selectedSet || null,
-        component: selectedComponent || null,
-        assembly: selectedAssembly || null,
-        part: selectedPart || null,
-      },
-    })
-  }, [selectedProject, selectedSet, selectedComponent, selectedAssembly, selectedPart])
+    if (activeProjectId && !openProjects.includes(activeProjectId)) {
+      setOpenProjects((prev) => [...prev, activeProjectId])
+    }
+  }, [activeProjectId, openProjects])
 
-  // ─── Production Selector ───
-  const renderProductionSelector = () => (
+  const projectSections = useMemo(
+    () => [
+      { key: 'general', label: 'General', icon: cilFolderOpen },
+      { key: 'configuration', label: 'Configuration', icon: cilSettings },
+      { key: 'production', label: 'Production', icon: cilFactory },
+      { key: 'materials', label: 'Materials', icon: cilLayers },
+      { key: 'reports', label: 'Reports', icon: cilClipboard },
+      { key: 'administration', label: 'Administration', icon: cilMoney },
+    ],
+    [],
+  )
+
+  const handleSectionClick = (projectId, sectionKey) => {
+    dispatch({ type: 'setActiveProject', projectId })
+    dispatch({ type: 'set', activeModule: 'production' })
+    navigate(`/production/treeview?project=${projectId}&section=${sectionKey}`)
+  }
+
+  const renderProjectTree = () => (
     <CCard className="border-0 bg-transparent text-white">
-      <CCardBody>
-        <CNavTitle className="text-light">Production Selector</CNavTitle>
-
-        {/* 1️⃣ Project */}
-        <CFormSelect
-          label="Select Project"
-          className="mb-3 bg-dark text-white"
-          value={selectedProject}
-          onChange={(e) => {
-            setSelectedProject(e.target.value)
-            setSelectedSet('')
-            setSelectedComponent('')
-            setSelectedAssembly('')
-            setSelectedPart('')
-          }}
-        >
-          <option value="">-- Choose Project --</option>
-          {mockProductionData.map((p, i) => (
-            <option key={i} value={p.project}>
-              {p.project}
-            </option>
-          ))}
-        </CFormSelect>
-
-        {/* 2️⃣ Set */}
-        {selectedProject && (
-          <CFormSelect
-            label="Select Set"
-            className="mb-3 bg-dark text-white"
-            value={selectedSet}
-            onChange={(e) => {
-              setSelectedSet(e.target.value)
-              setSelectedComponent('')
-              setSelectedAssembly('')
-              setSelectedPart('')
-            }}
+      <CCardBody className="pb-0">
+        <div className="d-flex align-items-center justify-content-between mb-3">
+          <CNavTitle className="text-light mb-0">Project Hierarchy</CNavTitle>
+          <CButton
+            color="warning"
+            size="sm"
+            className="text-dark fw-semibold"
+            onClick={() => navigate('/production/treeview')}
           >
-            <option value="">-- Choose Set --</option>
-            {currentProject?.sets.map((s, i) => (
-              <option key={i} value={s.name}>
-                {s.name}
-              </option>
-            ))}
-          </CFormSelect>
-        )}
+            + Add Project
+          </CButton>
+        </div>
 
-        {/* 3️⃣ Component */}
-        {selectedSet && (
-          <CFormSelect
-            label="Select Component"
-            className="mb-3 bg-dark text-white"
-            value={selectedComponent}
-            onChange={(e) => {
-              setSelectedComponent(e.target.value)
-              setSelectedAssembly('')
-              setSelectedPart('')
-            }}
+        {projects.length === 0 ? (
+          <div className="small text-light opacity-75">No projects yet. Start by adding one.</div>
+        ) : (
+          <CAccordion
+            alwaysOpen
+            activeItemKey={openProjects}
+            flush
+            onChange={(key) =>
+              setOpenProjects(Array.isArray(key) ? key : key ? [key] : openProjects)
+            }
           >
-            <option value="">-- Choose Component --</option>
-            {currentSet?.components.map((c, i) => (
-              <option key={i} value={c.name}>
-                {c.name}
-              </option>
+            {projects.map((project) => (
+              <CAccordionItem
+                itemKey={project.id}
+                key={project.id}
+                className={`bg-dark text-light rounded-3 mb-2 ${
+                  activeProjectId === project.id ? 'border border-warning' : 'border-0'
+                }`}
+              >
+                <CAccordionHeader
+                  className="text-light"
+                  onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
+                >
+                  <div className="d-flex flex-column">
+                    <span className="fw-semibold">{project.name}</span>
+                    <small className="text-body-secondary">{project.code}</small>
+                  </div>
+                  <CBadge color="warning" className="ms-2 text-dark fw-semibold">
+                    {project.status}
+                  </CBadge>
+                </CAccordionHeader>
+                <CAccordionBody className="pt-0">
+                  <div className="small text-body-secondary mb-3">{project.description}</div>
+                  <div className="d-grid gap-2">
+                    {projectSections.map((section) => (
+                      <CButton
+                        key={section.key}
+                        color="secondary"
+                        variant="outline"
+                        className="d-flex align-items-center justify-content-between text-start"
+                        onClick={() => handleSectionClick(project.id, section.key)}
+                      >
+                        <span>
+                          <CIcon icon={section.icon} className="me-2 text-warning" />
+                          {section.label}
+                        </span>
+                        <CIcon icon={openProjects.includes(project.id) ? cilChevronBottom : cilChevronRight} />
+                      </CButton>
+                    ))}
+                  </div>
+                  <div className="d-flex align-items-center gap-2 mt-3 small text-body-secondary">
+                    <span className="fw-semibold text-light">Owner:</span>
+                    <span>{project.owner}</span>
+                  </div>
+                </CAccordionBody>
+              </CAccordionItem>
             ))}
-          </CFormSelect>
-        )}
-
-        {/* 4️⃣ Assembly */}
-        {selectedComponent && (
-          <CFormSelect
-            label="Select Assembly"
-            className="mb-3 bg-dark text-white"
-            value={selectedAssembly}
-            onChange={(e) => {
-              setSelectedAssembly(e.target.value)
-              setSelectedPart('')
-            }}
-          >
-            <option value="">-- Choose Assembly --</option>
-            {currentComponent?.assemblies.map((a, i) => (
-              <option key={i} value={a.name}>
-                {a.name}
-              </option>
-            ))}
-          </CFormSelect>
-        )}
-
-        {/* 5️⃣ Part */}
-        {selectedAssembly && (
-          <CFormSelect
-            label="Select Part"
-            className="mb-3 bg-dark text-white"
-            value={selectedPart}
-            onChange={(e) => setSelectedPart(e.target.value)}
-          >
-            <option value="">-- Choose Part --</option>
-            {currentAssembly?.parts.map((p, i) => (
-              <option key={i} value={p}>
-                {p}
-              </option>
-            ))}
-          </CFormSelect>
+          </CAccordion>
         )}
       </CCardBody>
     </CCard>
   )
 
-  // ─── Financial Selector ───
   const renderFinancialSelector = () => (
     <CCard className="border-0 bg-transparent text-white">
       <CCardBody>
-        <CNavTitle className="text-light">Financial Selector</CNavTitle>
-
-        <CFormSelect className="bg-dark text-white mb-3">
-          <option>-- Choose Budget --</option>
-          {mockFinancialData.map((p, i) => (
-            <option key={i}>{p.project}</option>
-          ))}
-        </CFormSelect>
-        <CFormSelect className="bg-dark text-white mb-3">
-          <option>-- Choose Department --</option>
-          <option>Engineering</option>
-          <option>Operations</option>
-        </CFormSelect>
-        <CFormSelect className="bg-dark text-white mb-3">
-          <option>-- Choose Expense Type --</option>
-          <option>Procurement</option>
-          <option>Maintenance</option>
-        </CFormSelect>
+        <CNavTitle className="text-light">Financial</CNavTitle>
+        <div className="text-body-secondary small">
+          Financial navigation will live here. Use the top menu to jump to reports or expenses.
+        </div>
       </CCardBody>
     </CCard>
   )
 
-  // ─── Dashboard Menu ───
   const renderDashboardMenu = () => (
     <CCard className="border-0 bg-transparent text-white">
       <CCardBody>
-        <CNavTitle className="text-light">Dashboard Navigation</CNavTitle>
-        <div className="ps-2">
-          <div className="py-1">
-            <CIcon icon={cilSpeedometer} className="me-2 text-info" /> Overview
-          </div>
-          <div className="py-1">
-            <CIcon icon={cilClipboard} className="me-2 text-warning" /> Reports
-          </div>
-        </div>
+        <CNavTitle className="text-light">Dashboard</CNavTitle>
+        <div className="text-body-secondary small">Welcome back. Choose a module to get started.</div>
       </CCardBody>
     </CCard>
   )
@@ -266,7 +183,7 @@ const AppSidebar = () => {
 
       <CSidebarNav className="pt-2 pb-4" style={{ overflowY: 'auto' }}>
         {activeModule === 'production'
-          ? renderProductionSelector()
+          ? renderProjectTree()
           : activeModule === 'financial'
           ? renderFinancialSelector()
           : renderDashboardMenu()}
