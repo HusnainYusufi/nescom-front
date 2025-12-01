@@ -6,29 +6,29 @@ import {
   CAlert,
   CBadge,
   CButton,
-  CButtonGroup,
   CCard,
   CCardBody,
   CCardHeader,
+  CCardTitle,
   CCol,
   CContainer,
   CForm,
   CFormInput,
-  CModal,
-  CModalBody,
-  CModalFooter,
-  CModalHeader,
-  CModalTitle,
+  CFormSelect,
+  CListGroup,
+  CListGroupItem,
   CRow,
-  CTable,
-  CTableBody,
-  CTableDataCell,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilCheckCircle, cilPlus } from '@coreui/icons'
+import {
+  cilFactory,
+  cilSettings,
+  cilClipboard,
+  cilLayers,
+  cilPeople,
+  cilCheckCircle,
+  cilPlus,
+} from '@coreui/icons'
 
 const ProductionTreeView = () => {
   const dispatch = useDispatch()
@@ -39,14 +39,13 @@ const ProductionTreeView = () => {
   const [form, setForm] = useState({
     name: '',
     code: '',
-    system: '',
+    category: '',
+    status: 'Draft',
     owner: '',
     description: '',
   })
   const [errors, setErrors] = useState({})
   const [success, setSuccess] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [activeTab, setActiveTab] = useState('projects')
 
   useEffect(() => {
     dispatch({ type: 'set', activeModule: 'production' })
@@ -64,14 +63,24 @@ const ProductionTreeView = () => {
     [projects, activeProjectId],
   )
 
-  const navTabs = [
-    { key: 'general', label: 'General' },
-    { key: 'configuration', label: 'Configuration' },
-    { key: 'production', label: 'Production' },
-    { key: 'materials', label: 'Materials' },
-    { key: 'reports', label: 'Reports' },
-    { key: 'administration', label: 'Administration' },
-    { key: 'projects', label: 'Projects Hierarchy' },
+  const quickLinks = [
+    { label: 'Project Hierarchy', icon: cilFactory, description: 'Manage project details, batches and documents.' },
+    {
+      label: 'Configuration Parts',
+      icon: cilSettings,
+      description: 'Add, delete, replace and revise parts under configurations.',
+    },
+    {
+      label: 'Copy Configurations',
+      icon: cilClipboard,
+      description: 'Clone configurations into newly defined projects.',
+    },
+    {
+      label: 'Categories & Material Forms',
+      icon: cilLayers,
+      description: 'Manage part categories and material forms.',
+    },
+    { label: 'Assign Auxiliary Material', icon: cilPeople, description: 'Assign auxiliary materials to selected parts.' },
   ]
 
   const handleInputChange = (e) => {
@@ -83,7 +92,7 @@ const ProductionTreeView = () => {
     const nextErrors = {}
     if (!form.name.trim()) nextErrors.name = 'Project name is required'
     if (!form.code.trim()) nextErrors.code = 'Project code is required'
-    if (!form.system.trim()) nextErrors.system = 'System is required'
+    if (!form.category) nextErrors.category = 'Select a category'
     if (!form.owner.trim()) nextErrors.owner = 'Enter an owner or team'
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -97,167 +106,169 @@ const ProductionTreeView = () => {
       id: `proj-${Date.now()}`,
       name: form.name,
       code: form.code,
-      status: 'Draft',
-      system: form.system,
+      status: form.status,
       owner: form.owner,
       description: form.description,
     }
 
     dispatch({ type: 'addProject', project: newProject })
     setSuccess(`Project "${form.name}" added to the workspace.`)
-    setForm({ name: '', code: '', system: '', owner: '', description: '' })
-    setShowModal(false)
+    setForm({ name: '', code: '', category: '', status: 'Draft', owner: '', description: '' })
   }
 
   return (
     <CContainer fluid className="py-4">
-      <CCard className="shadow-sm border-0 mb-4">
-        <CCardHeader className="bg-white">
-          <div className="d-flex flex-wrap align-items-center justify-content-between">
-            <div className="fw-semibold">Production</div>
-            <CButtonGroup role="group" aria-label="Production tabs">
-              {navTabs.map((tab) => (
-                <CButton
-                  key={tab.key}
-                  color="link"
-                  className={`fw-semibold text-decoration-underline ${
-                    activeTab === tab.key ? 'text-danger' : 'text-body'
-                  }`}
-                  onClick={() => setActiveTab(tab.key)}
-                >
-                  {tab.label}
-                </CButton>
-              ))}
-            </CButtonGroup>
-          </div>
-        </CCardHeader>
-      </CCard>
-
-      {activeTab !== 'projects' ? (
-        <CAlert color="secondary" className="mb-0">
-          Select <span className="fw-semibold">Projects Hierarchy</span> to view and manage all projects. Other tabs will
-          be wired as their modules are built.
-        </CAlert>
-      ) : (
-        <CCard className="shadow-sm border-0">
-          <CCardHeader className="d-flex justify-content-between align-items-center">
-            <span className="fw-semibold">Projects Hierarchy</span>
-            <CButton color="primary" size="sm" onClick={() => setShowModal(true)}>
+      <CRow className="g-4">
+        <CCol md={6} xl={5}>
+          <CCard className="shadow-sm border-0 h-100">
+            <CCardHeader className="bg-dark text-white d-flex align-items-center">
               <CIcon icon={cilPlus} className="me-2" /> Add New Project
-            </CButton>
-          </CCardHeader>
-          <CCardBody>
-            {success && (
-              <CAlert color="success" className="fw-semibold">
-                <CIcon icon={cilCheckCircle} className="me-2" /> {success}
-              </CAlert>
-            )}
+            </CCardHeader>
+            <CCardBody>
+              {success && (
+                <CAlert color="success" className="fw-semibold">
+                  <CIcon icon={cilCheckCircle} className="me-2" /> {success}
+                </CAlert>
+              )}
+              <CForm className="mt-2" onSubmit={handleSubmit}>
+                <CFormInput
+                  label="Project Name"
+                  name="name"
+                  value={form.name}
+                  onChange={handleInputChange}
+                  invalid={!!errors.name}
+                  feedbackInvalid={errors.name}
+                  className="mb-3"
+                />
+                <CFormInput
+                  label="Project Code"
+                  name="code"
+                  value={form.code}
+                  onChange={handleInputChange}
+                  invalid={!!errors.code}
+                  feedbackInvalid={errors.code}
+                  className="mb-3"
+                />
+                <CFormSelect
+                  label="Category"
+                  name="category"
+                  value={form.category}
+                  onChange={handleInputChange}
+                  invalid={!!errors.category}
+                  feedbackInvalid={errors.category}
+                  className="mb-3"
+                >
+                  <option value="">Choose category</option>
+                  <option value="Aerial">Aerial</option>
+                  <option value="Ballistic">Ballistic</option>
+                  <option value="Naval">Naval</option>
+                </CFormSelect>
+                <CFormSelect
+                  label="Status"
+                  name="status"
+                  value={form.status}
+                  onChange={handleInputChange}
+                  className="mb-3"
+                >
+                  <option>Draft</option>
+                  <option>In Configuration</option>
+                  <option>In Production</option>
+                </CFormSelect>
+                <CFormInput
+                  label="Owner / Team"
+                  name="owner"
+                  value={form.owner}
+                  onChange={handleInputChange}
+                  invalid={!!errors.owner}
+                  feedbackInvalid={errors.owner}
+                  className="mb-3"
+                />
+                <CFormInput
+                  label="Short Description"
+                  name="description"
+                  value={form.description}
+                  onChange={handleInputChange}
+                  className="mb-4"
+                  placeholder="What is this project about?"
+                />
+                <div className="d-grid gap-2">
+                  <CButton color="warning" type="submit" className="text-dark fw-semibold">
+                    Add Project
+                  </CButton>
+                </div>
+              </CForm>
+            </CCardBody>
+          </CCard>
+        </CCol>
 
-            {projects.length === 0 ? (
-              <CAlert color="secondary" className="text-center mb-0">
-                Start by adding a project to populate the navigation tree.
-              </CAlert>
-            ) : (
-              <CTable hover responsive>
-                <CTableHead color="light">
-                  <CTableRow>
-                    <CTableHeaderCell scope="col">Code</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Name</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Description</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">System</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Status</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
+        <CCol md={6} xl={7}>
+          <CCard className="shadow-sm border-0 mb-4">
+            <CCardHeader className="bg-light fw-semibold">Projects at a glance</CCardHeader>
+            <CCardBody>
+              {projects.length === 0 ? (
+                <CAlert color="secondary" className="text-center mb-0">
+                  Start by adding a project to populate the navigation tree.
+                </CAlert>
+              ) : (
+                <CListGroup flush>
                   {projects.map((project) => (
-                    <CTableRow
+                    <CListGroupItem
                       key={project.id}
-                      active={activeProject?.id === project.id}
-                      role="button"
-                      onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
+                      className={`d-flex justify-content-between align-items-center ${
+                        activeProject?.id === project.id ? 'bg-body-secondary' : ''
+                      }`}
                     >
-                      <CTableDataCell className="fw-semibold">{project.code}</CTableDataCell>
-                      <CTableDataCell>{project.name}</CTableDataCell>
-                      <CTableDataCell className="text-wrap" style={{ maxWidth: 320 }}>
-                        {project.description}
-                      </CTableDataCell>
-                      <CTableDataCell>{project.system || '—'}</CTableDataCell>
-                      <CTableDataCell>
-                        <CBadge color="warning" className="text-dark fw-semibold">
+                      <div>
+                        <div className="fw-semibold">{project.name}</div>
+                        <div className="small text-body-secondary">{project.description}</div>
+                      </div>
+                      <div className="text-end">
+                        <CBadge color="warning" className="text-dark fw-semibold mb-1">
                           {project.status}
                         </CBadge>
-                      </CTableDataCell>
-                    </CTableRow>
+                        <div className="small text-body-secondary">Owner: {project.owner}</div>
+                      </div>
+                    </CListGroupItem>
                   ))}
-                </CTableBody>
-              </CTable>
-            )}
-          </CCardBody>
-        </CCard>
-      )}
+                </CListGroup>
+              )}
+            </CCardBody>
+          </CCard>
 
-      <CModal visible={showModal} onClose={() => setShowModal(false)} backdrop="static">
-        <CModalHeader closeButton>
-          <CModalTitle>Add New Project</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          <CForm onSubmit={handleSubmit}>
-            <CFormInput
-              label="Project Name"
-              name="name"
-              value={form.name}
-              onChange={handleInputChange}
-              invalid={!!errors.name}
-              feedbackInvalid={errors.name}
-              className="mb-3"
-            />
-            <CFormInput
-              label="Project Code"
-              name="code"
-              value={form.code}
-              onChange={handleInputChange}
-              invalid={!!errors.code}
-              feedbackInvalid={errors.code}
-              className="mb-3"
-            />
-            <CFormInput
-              label="System"
-              name="system"
-              value={form.system}
-              onChange={handleInputChange}
-              invalid={!!errors.system}
-              feedbackInvalid={errors.system}
-              className="mb-3"
-              placeholder="e.g. Guidance, Propulsion"
-            />
-            <CFormInput
-              label="Owner / Team"
-              name="owner"
-              value={form.owner}
-              onChange={handleInputChange}
-              invalid={!!errors.owner}
-              feedbackInvalid={errors.owner}
-              className="mb-3"
-            />
-            <CFormInput
-              label="Short Description"
-              name="description"
-              value={form.description}
-              onChange={handleInputChange}
-              className="mb-1"
-              placeholder="What is this project about?"
-            />
-          </CForm>
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>
-            Cancel
-          </CButton>
-          <CButton color="primary" onClick={handleSubmit}>
-            <CIcon icon={cilPlus} className="me-2" /> Add Project
-          </CButton>
-        </CModalFooter>
-      </CModal>
+          <CCard className="shadow-sm border-0">
+            <CCardHeader className="bg-primary text-white fw-semibold">
+              What would you like to do next?
+            </CCardHeader>
+            <CCardBody>
+              <CRow className="g-3">
+                {quickLinks.map((item, idx) => (
+                  <CCol md={6} key={idx}>
+                    <CCard className="h-100 border-0 bg-body-secondary bg-opacity-50">
+                      <CCardBody>
+                        <CCardTitle className="h6 d-flex align-items-center">
+                          <CIcon icon={item.icon} className="me-2 text-primary" />
+                          {item.label}
+                        </CCardTitle>
+                        <div className="small text-body-secondary mb-3">{item.description}</div>
+                        <CButton
+                          size="sm"
+                          color="primary"
+                          variant="outline"
+                          onClick={() =>
+                            dispatch({ type: 'setActiveProject', projectId: activeProject?.id || null })
+                          }
+                        >
+                          Open from project tree
+                        </CButton>
+                      </CCardBody>
+                    </CCard>
+                  </CCol>
+                ))}
+              </CRow>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
     </CContainer>
   )
 }

@@ -14,7 +14,6 @@ const initialState = {
       code: 'PX-001',
       description: 'Baseline airframe with electrical and composite work packages.',
       status: 'In Configuration',
-      system: 'Guidance',
       owner: 'Systems Team',
     },
     {
@@ -23,7 +22,6 @@ const initialState = {
       code: 'SN-204',
       description: 'Surveillance platform focused on propulsion and avionics integration.',
       status: 'In Production',
-      system: 'Avionics',
       owner: 'Flight Test',
     },
   ],
