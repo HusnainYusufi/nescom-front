@@ -135,7 +135,7 @@ const AppHeader = () => {
                 className={`btn btn-sm text-white ${
                   activeModule === 'production' ? 'fw-bold text-warning' : ''
                 }`}
-                onClick={() => switchModule('production', '/production/treeview')}
+                onClick={() => switchModule('production', '/production')}
               >
                 <CIcon icon={cilFactory} className="me-1" /> Production ▾
               </CNavLink>

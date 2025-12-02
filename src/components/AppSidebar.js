@@ -172,7 +172,6 @@ const AppSidebar = () => {
       unfoldable={unfoldable}
       onVisibleChange={(visible) => dispatch({ type: 'set', sidebarShow: visible })}
       className="bg-dark text-white border-end"
-      style={{ '--cui-sidebar-width': '320px', width: '320px' }}
     >
       <CSidebarHeader className="border-bottom text-center py-3 fw-bold text-light">
         {activeModule === 'production'
