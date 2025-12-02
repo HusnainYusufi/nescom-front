@@ -46,25 +46,6 @@ const ProductionHome = () => {
   const renderButton = (action, idx) => {
     const accent = accentColors[idx % accentColors.length]
 
-    return (
-      <CCol key={`${action.label}-${idx}`} md={6} xl={4} className="d-flex">
-        <CCard className="w-100 h-100 shadow-sm border-0 overflow-hidden">
-          <div className={`px-3 pt-3 pb-2 border-start border-4 border-${accent} bg-light`}>
-            <div className="text-uppercase small fw-semibold text-body-secondary">Production Setup</div>
-            <div className="fw-semibold fs-5 text-dark lh-sm">{action.label}</div>
-          </div>
-          <CCardBody className="d-flex flex-column justify-content-between gap-3">
-            <p className="mb-0 text-body-secondary lh-base">{action.description}</p>
-            <div className="d-flex align-items-center justify-content-between text-primary fw-semibold">
-              <span className="small">Open module</span>
-              <span aria-hidden className="fs-5">→</span>
-            </div>
-          </CCardBody>
-        </CCard>
-      </CCol>
-    )
-  }
-
   return (
     <CContainer fluid className="py-4">
       <CCard className="shadow-sm border-0">
