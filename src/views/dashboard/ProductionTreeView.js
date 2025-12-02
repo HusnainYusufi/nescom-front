@@ -103,6 +103,7 @@ const ProductionTreeView = () => {
     {
       title: 'Configuration Parts',
       description: 'Contains detail of parts revision and revision of helping materials.',
+      route: '/production/configuration-parts',
     },
     {
       title: 'Build Configuration',
@@ -127,6 +128,19 @@ const ProductionTreeView = () => {
       description: 'You can add Phase and Activities details for a part.',
     },
   ]
+
+  const handleConfigurationOptionClick = (option) => {
+    if (!option.route) return
+    const projectId = activeProjectId || projects[0]?.id
+    if (projectId) {
+      dispatch({ type: 'setActiveProject', projectId })
+    }
+
+    const params = new URLSearchParams()
+    if (projectId) params.set('project', projectId)
+
+    navigate({ pathname: option.route, search: params.toString() })
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -275,6 +289,17 @@ const ProductionTreeView = () => {
                               <p className="text-body-secondary mb-0 small">{option.description}</p>
                             </div>
                           </div>
+                          {option.route && (
+                            <CButton
+                              color="primary"
+                              variant="outline"
+                              size="sm"
+                              className="mt-3"
+                              onClick={() => handleConfigurationOptionClick(option)}
+                            >
+                              Open {option.title}
+                            </CButton>
+                          )}
                         </CCardBody>
                       </CCard>
                     </CCol>
