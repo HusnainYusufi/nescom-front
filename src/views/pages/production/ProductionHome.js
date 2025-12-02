@@ -13,18 +13,15 @@ const ProductionHome = () => {
   const buttons = [
     {
       label: 'Projects Hierarchy',
-      description:
-        "This form allows Add, Delete, and Update Project Details that includes Project’s Configurations, Batches, Batteries and Project Documents.",
+      description: 'This form allows Add, Delete, and Update Project Details that includes Project’s Configurations, Batches, Batteries and Project Documents.',
     },
     {
       label: 'Directorates And Sites',
-      description:
-        'Here you can Add, Delete, Update and View Directorates, Sub-Directorates and Sites.',
+      description: 'Here you can Add, Delete, Update and View Directorates, Sub-Directorates and Sites.',
     },
     {
       label: 'Part Types, Categories and Material Forms',
-      description:
-        'Here you can Add, Delete, Update and View all possible Materials, Part Categories and Part Types.',
+      description: 'Here you can Add, Delete, Update and View all possible Materials, Part Categories and Part Types.',
     },
     {
       label: 'Activities And Phases',
@@ -44,17 +41,10 @@ const ProductionHome = () => {
     },
   ]
 
-  const renderButton = (action, idx) => (
-    <CCol key={`${action.label}-${idx}`} md={6} xl={4} className="d-flex">
-      <div
-        role="button"
-        className="btn btn-light border shadow-sm w-100 text-start p-3 d-flex flex-column h-100 gap-2 rounded-3"
-      >
-        <div className="fw-semibold lh-sm text-primary fs-6">{action.label}</div>
-        <div className="text-body-secondary small lh-base flex-grow-1">{action.description}</div>
-      </div>
-    </CCol>
-  )
+  const accentColors = ['primary', 'info', 'success', 'warning', 'danger', 'secondary']
+
+  const renderButton = (action, idx) => {
+    const accent = accentColors[idx % accentColors.length]
 
   return (
     <CContainer fluid className="py-4">
