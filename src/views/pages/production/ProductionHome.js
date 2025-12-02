@@ -13,18 +13,15 @@ const ProductionHome = () => {
   const buttons = [
     {
       label: 'Projects Hierarchy',
-      description:
-        "This form allows Add, Delete, and Update Project Details that includes Project’s Configurations, Batches, Batteries and Project Documents.",
+      description: 'This form allows Add, Delete, and Update Project Details that includes Project’s Configurations, Batches, Batteries and Project Documents.',
     },
     {
       label: 'Directorates And Sites',
-      description:
-        'Here you can Add, Delete, Update and View Directorates, Sub-Directorates and Sites.',
+      description: 'Here you can Add, Delete, Update and View Directorates, Sub-Directorates and Sites.',
     },
     {
       label: 'Part Types, Categories and Material Forms',
-      description:
-        'Here you can Add, Delete, Update and View all possible Materials, Part Categories and Part Types.',
+      description: 'Here you can Add, Delete, Update and View all possible Materials, Part Categories and Part Types.',
     },
     {
       label: 'Activities And Phases',
@@ -44,19 +41,29 @@ const ProductionHome = () => {
     },
   ]
 
-  const renderButton = (action, idx) => (
-    <CCol key={`${action.label}-${idx}`} md={6} xl={4} className="d-flex">
-      <div
-        role="button"
-        className="btn btn-light border shadow-sm w-100 text-start p-3 d-flex flex-column h-100 gap-2 rounded-3"
-      >
-        <div className="fw-semibold lh-sm text-primary fs-6">{action.label}</div>
-        <div className="text-body-secondary small lh-base flex-grow-1">{action.description}</div>
-      </div>
-    </CCol>
-  )
+  const accentColors = ['primary', 'info', 'success', 'warning', 'danger', 'secondary']
 
-  const buttons = [...setupActions, ...viewActions]
+  const renderButton = (action, idx) => {
+    const accent = accentColors[idx % accentColors.length]
+
+    return (
+      <CCol key={`${action.label}-${idx}`} md={6} xl={4} className="d-flex">
+        <CCard className="w-100 h-100 shadow-sm border-0 overflow-hidden">
+          <div className={`px-3 pt-3 pb-2 border-start border-4 border-${accent} bg-light`}>
+            <div className="text-uppercase small fw-semibold text-body-secondary">Production Setup</div>
+            <div className="fw-semibold fs-5 text-dark lh-sm">{action.label}</div>
+          </div>
+          <CCardBody className="d-flex flex-column justify-content-between gap-3">
+            <p className="mb-0 text-body-secondary lh-base">{action.description}</p>
+            <div className="d-flex align-items-center justify-content-between text-primary fw-semibold">
+              <span className="small">Open module</span>
+              <span aria-hidden className="fs-5">→</span>
+            </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
+    )
+  }
 
   return (
     <CContainer fluid className="py-4">
