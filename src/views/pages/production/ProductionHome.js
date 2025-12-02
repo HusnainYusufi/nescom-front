@@ -46,12 +46,27 @@ const ProductionHome = () => {
   const renderButton = (action, idx) => {
     const accent = accentColors[idx % accentColors.length]
 
+    return (
+      <CCol key={action.label} md={6} lg={4}>
+        <CCard className={`border-start border-4 border-${accent} h-100 shadow-sm`}>
+          <CCardBody>
+            <div className="d-flex align-items-start">
+              <span className={`badge bg-${accent} me-3`}>{idx + 1}</span>
+              <div>
+                <h6 className="fw-semibold mb-2 text-capitalize">{action.label}</h6>
+                <p className="text-body-secondary small mb-0">{action.description}</p>
+              </div>
+            </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
+    )
+  }
+
   return (
     <CContainer fluid className="py-4">
       <CCard className="shadow-sm border-0">
-        <CCardHeader className="bg-primary text-white fw-semibold py-3">
-          Production
-        </CCardHeader>
+        <CCardHeader className="bg-primary text-white fw-semibold py-3">Production</CCardHeader>
         <CCardBody className="p-4">
           <CRow className="g-3">{buttons.map((action, idx) => renderButton(action, idx))}</CRow>
         </CCardBody>
