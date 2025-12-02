@@ -81,9 +81,9 @@ const AppSidebar = () => {
   }
 
   const renderProjectTree = () => (
-    <CCard className="border-0 bg-transparent text-white">
-      <CCardBody className="pb-0">
-        <div className="d-flex align-items-center justify-content-between mb-3">
+    <CCard className="border-0 bg-transparent text-white app-sidebar__card">
+      <CCardBody className="pb-0 app-sidebar__card-body">
+        <div className="d-flex align-items-center justify-content-between mb-3 gap-2 app-sidebar__actions">
           <CNavTitle className="text-light mb-0">Project Hierarchy</CNavTitle>
           <CButton
             color="warning"
@@ -127,14 +127,16 @@ const AppSidebar = () => {
                   </CBadge>
                 </CAccordionHeader>
                 <CAccordionBody className="pt-0">
-                  <div className="small text-body-secondary mb-3">{project.description}</div>
+                  <div className="small text-body-secondary mb-3 app-sidebar__project-meta">
+                    {project.description}
+                  </div>
                   <div className="d-grid gap-2">
                     {projectSections.map((section) => (
                       <CButton
                         key={section.key}
                         color="secondary"
                         variant="outline"
-                        className="d-flex align-items-center justify-content-between text-start"
+                        className="d-flex align-items-center justify-content-between text-start app-sidebar__project-button"
                         onClick={() => handleSectionClick(project.id, section.key)}
                       >
                         <span>
@@ -159,8 +161,8 @@ const AppSidebar = () => {
   )
 
   const renderFinancialSelector = () => (
-    <CCard className="border-0 bg-transparent text-white">
-      <CCardBody>
+    <CCard className="border-0 bg-transparent text-white app-sidebar__card">
+      <CCardBody className="app-sidebar__card-body">
         <CNavTitle className="text-light">Financial</CNavTitle>
         <div className="text-body-secondary small">
           Financial navigation will live here. Use the top menu to jump to reports or expenses.
@@ -170,8 +172,8 @@ const AppSidebar = () => {
   )
 
   const renderDashboardMenu = () => (
-    <CCard className="border-0 bg-transparent text-white">
-      <CCardBody>
+    <CCard className="border-0 bg-transparent text-white app-sidebar__card">
+      <CCardBody className="app-sidebar__card-body">
         <CNavTitle className="text-light">Dashboard</CNavTitle>
         <div className="text-body-secondary small">Welcome back. Choose a module to get started.</div>
       </CCardBody>
@@ -187,8 +189,7 @@ const AppSidebar = () => {
       visible={sidebarShow}
       unfoldable={unfoldable}
       onVisibleChange={(visible) => dispatch({ type: 'set', sidebarShow: visible })}
-      className="bg-dark text-white border-end"
-      style={{ '--cui-sidebar-width': '20rem', '--cui-sidebar-width-narrow': '4.5rem' }}
+      className="bg-dark text-white border-end app-sidebar"
     >
       <CSidebarHeader className="border-bottom text-center py-3 fw-bold text-light">
         {activeModule === 'production'
@@ -198,7 +199,7 @@ const AppSidebar = () => {
           : '🏠 Dashboard'}
       </CSidebarHeader>
 
-      <CSidebarNav className="pt-2 pb-4" style={{ overflowY: 'auto' }}>
+      <CSidebarNav className="pt-2 pb-4 app-sidebar__nav" style={{ overflowY: 'auto' }}>
         {activeModule === 'production'
           ? renderProjectTree()
           : activeModule === 'financial'
