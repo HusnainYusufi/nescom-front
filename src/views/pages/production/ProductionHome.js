@@ -13,12 +13,13 @@ import {
 import CIcon from '@coreui/icons-react'
 import {
   cilFactory,
-  cilMap,
-  cilTags,
-  cilTask,
+  cilPlus,
+  cilLayers,
+  cilClipboard,
+  cilFolderOpen,
+  cilChart,
   cilCheckCircle,
   cilWarning,
-  cilListRich,
 } from '@coreui/icons'
 
 const ProductionHome = () => {
@@ -37,6 +38,12 @@ const ProductionHome = () => {
       </div>
       {action.description && <div className="text-body-secondary small lh-sm">{action.description}</div>}
     </Link>
+  )
+
+  const renderButton = (action) => (
+    <CCol key={action.to} xs={12} md={6} lg={4}>
+      {buildButton(action)}
+    </CCol>
   )
 
   const setupActions = [
@@ -135,6 +142,8 @@ const ProductionHome = () => {
       description: 'Review NCRs, reasons, and related issues that require attention.',
     },
   ]
+
+  const buttons = [...setupActions, ...viewActions]
 
   return (
     <CContainer fluid className="py-4">
