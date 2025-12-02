@@ -3,10 +3,6 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation } from 'react-router-dom'
 import {
-  CAccordion,
-  CAccordionBody,
-  CAccordionHeader,
-  CAccordionItem,
   CBadge,
   CButton,
   CCard,
@@ -22,6 +18,9 @@ import {
   CModalBody,
   CModalFooter,
   CModalHeader,
+  CNav,
+  CNavItem,
+  CNavLink,
   CRow,
   CTable,
   CTableBody,
@@ -45,10 +44,12 @@ const ProductionTreeView = () => {
     category: '',
     status: 'Draft',
     owner: '',
+    system: '',
     description: '',
   })
   const [errors, setErrors] = useState({})
   const [showAddModal, setShowAddModal] = useState(false)
+  const [expandedNodes, setExpandedNodes] = useState({})
 
   useEffect(() => {
     dispatch({ type: 'set', activeModule: 'production' })
@@ -83,6 +84,7 @@ const ProductionTreeView = () => {
     if (!form.code.trim()) nextErrors.code = 'Project code is required'
     if (!form.category) nextErrors.category = 'Select a category'
     if (!form.owner.trim()) nextErrors.owner = 'Enter an owner or team'
+    if (!form.system.trim()) nextErrors.system = 'Specify the system this project belongs to'
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -97,16 +99,95 @@ const ProductionTreeView = () => {
       code: form.code,
       status: form.status,
       owner: form.owner,
+      system: form.system,
       description: form.description,
     }
 
     dispatch({ type: 'addProject', project: newProject })
-    setForm({ name: '', code: '', category: '', status: 'Draft', owner: '', description: '' })
+    setForm({ name: '', code: '', category: '', status: 'Draft', owner: '', system: '', description: '' })
     setShowAddModal(false)
+  }
+
+  const baseTree = [
+    {
+      id: 'configurations',
+      label: 'Configurations',
+      children: [
+        { id: 'batches', label: 'Batches' },
+        { id: 'batteries', label: 'Batteries' },
+        { id: 'documents', label: 'Project Documents' },
+      ],
+    },
+    {
+      id: 'production',
+      label: 'Production',
+      children: [
+        { id: 'sets', label: 'Sets' },
+        { id: 'assemblies', label: 'Assemblies' },
+        { id: 'parts', label: 'Parts' },
+      ],
+    },
+  ]
+
+  const toggleNode = (nodeId) => {
+    setExpandedNodes((prev) => ({ ...prev, [nodeId]: !prev[nodeId] }))
+  }
+
+  const renderNode = (node, depth = 0, prefix = '') => {
+    const hasChildren = node.children && node.children.length > 0
+    const id = `${prefix}${node.id}`
+    const isExpanded = expandedNodes[id] ?? depth === 0
+
+    return (
+      <li key={id} className="mb-1">
+        <div
+          className="d-flex align-items-center gap-2"
+          role="button"
+          onClick={() => (hasChildren ? toggleNode(id) : null)}
+          style={{ paddingLeft: depth * 14 }}
+        >
+          {hasChildren ? (
+            <span className="text-muted small" style={{ width: 12 }}>
+              {isExpanded ? '▾' : '▸'}
+            </span>
+          ) : (
+            <span className="text-muted small" style={{ width: 12 }}>
+              •
+            </span>
+          )}
+          <span className="small text-body">{node.label}</span>
+        </div>
+        {hasChildren && isExpanded && (
+          <ul className="list-unstyled ms-0 mt-1 mb-0 border-start border-secondary-subtle ps-3">
+            {node.children.map((child) => renderNode(child, depth + 1, `${id}-`))}
+          </ul>
+        )}
+      </li>
+    )
   }
 
   return (
     <CContainer fluid className="py-4">
+      <CNav variant="tabs" className="mb-3">
+        <CNavItem>
+          <CNavLink active>General</CNavLink>
+        </CNavItem>
+        <CNavItem>
+          <CNavLink disabled>Configuration</CNavLink>
+        </CNavItem>
+        <CNavItem>
+          <CNavLink disabled>Production</CNavLink>
+        </CNavItem>
+        <CNavItem>
+          <CNavLink disabled>Materials</CNavLink>
+        </CNavItem>
+        <CNavItem>
+          <CNavLink disabled>Reports</CNavLink>
+        </CNavItem>
+        <CNavItem>
+          <CNavLink disabled>Administration</CNavLink>
+        </CNavItem>
+      </CNav>
       <CRow className="g-4">
         <CCol lg={4} xl={3} className="order-lg-1 order-2">
           <CCard className="shadow-sm border-0 h-100">
@@ -120,45 +201,54 @@ const ProductionTreeView = () => {
               {projects.length === 0 ? (
                 <div className="small text-body-secondary">No projects yet. Start by adding one.</div>
               ) : (
-                <CAccordion alwaysOpen activeItemKey={activeProject?.id} flush>
+                <div className="d-flex flex-column gap-3">
                   {projects.map((project) => (
-                    <CAccordionItem
-                      itemKey={project.id}
+                    <div
                       key={project.id}
-                      className={`rounded-3 mb-2 ${activeProjectId === project.id ? 'border border-warning' : 'border-0'}`}
+                      className={`p-3 rounded-3 border ${
+                        activeProjectId === project.id
+                          ? 'border-warning bg-warning-subtle'
+                          : 'border-secondary-subtle'
+                      }`}
                     >
-                      <CAccordionHeader onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}>
-                        <div className="d-flex flex-column">
-                          <span className="fw-semibold">{project.name}</span>
-                          <small className="text-body-secondary">{project.code}</small>
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                          <div className="fw-semibold">{project.name}</div>
+                          <div className="text-body-secondary small">{project.code}</div>
+                          <div className="text-body-secondary small">System: {project.system || '—'}</div>
                         </div>
-                        <CBadge color="warning" className="ms-2 text-dark fw-semibold">
+                        <CBadge color="warning" className="text-dark fw-semibold">
                           {project.status}
                         </CBadge>
-                      </CAccordionHeader>
-                      <CAccordionBody className="pt-0">
-                        <div className="small text-body-secondary mb-3">{project.description}</div>
-                        <CListGroup flush>
-                          {projectSections.map((section) => (
-                            <CListGroupItem
-                              key={section.key}
-                              action
-                              active={activeProject?.id === project.id}
-                              onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
-                              className="d-flex align-items-center gap-2"
-                            >
-                              <CIcon icon={section.icon} className="text-warning" /> {section.label}
-                            </CListGroupItem>
-                          ))}
-                        </CListGroup>
-                        <div className="d-flex align-items-center gap-2 mt-3 small text-body-secondary">
-                          <span className="fw-semibold">Owner:</span>
-                          <span>{project.owner}</span>
-                        </div>
-                      </CAccordionBody>
-                    </CAccordionItem>
+                      </div>
+                      <CListGroup flush className="mb-3">
+                        {projectSections.map((section) => (
+                          <CListGroupItem
+                            key={`${project.id}-${section.key}`}
+                            action
+                            active={activeProject?.id === project.id}
+                            onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
+                            className="d-flex align-items-center gap-2"
+                          >
+                            <CIcon icon={section.icon} className="text-warning" /> {section.label}
+                          </CListGroupItem>
+                        ))}
+                      </CListGroup>
+                      <div className="fw-semibold small mb-2">Tree</div>
+                      <ul className="list-unstyled mb-0">
+                        {renderNode(
+                          {
+                            id: project.id,
+                            label: `${project.name} (${project.code})`,
+                            children: baseTree,
+                          },
+                          0,
+                          `${project.id}-`,
+                        )}
+                      </ul>
+                    </div>
                   ))}
-                </CAccordion>
+                </div>
               )}
             </CCardBody>
           </CCard>
@@ -174,13 +264,14 @@ const ProductionTreeView = () => {
                     <CTableHeaderCell scope="col">Code</CTableHeaderCell>
                     <CTableHeaderCell scope="col">Name</CTableHeaderCell>
                     <CTableHeaderCell scope="col">Description</CTableHeaderCell>
+                    <CTableHeaderCell scope="col">System</CTableHeaderCell>
                     <CTableHeaderCell scope="col">Status</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
                   {projects.length === 0 ? (
                     <CTableRow>
-                      <CTableDataCell colSpan={4} className="text-center text-body-secondary py-4">
+                      <CTableDataCell colSpan={5} className="text-center text-body-secondary py-4">
                         No projects available. Use the Add Project button to create one.
                       </CTableDataCell>
                     </CTableRow>
@@ -197,6 +288,7 @@ const ProductionTreeView = () => {
                         <CTableDataCell className="text-wrap" style={{ maxWidth: '420px' }}>
                           {project.description}
                         </CTableDataCell>
+                        <CTableDataCell>{project.system || '—'}</CTableDataCell>
                         <CTableDataCell>
                           <CBadge color="warning" className="text-dark fw-semibold">
                             {project.status}
@@ -267,6 +359,16 @@ const ProductionTreeView = () => {
               invalid={!!errors.owner}
               feedbackInvalid={errors.owner}
               className="mb-3"
+            />
+            <CFormInput
+              label="System"
+              name="system"
+              value={form.system}
+              onChange={handleInputChange}
+              invalid={!!errors.system}
+              feedbackInvalid={errors.system}
+              className="mb-3"
+              placeholder="e.g., Fire Control"
             />
             <CFormInput
               label="Short Description"
