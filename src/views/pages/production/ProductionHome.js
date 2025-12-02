@@ -1,10 +1,12 @@
 // src/views/pages/production/ProductionHome.js
 import React, { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { CCard, CCardBody, CCardHeader, CCol, CContainer, CRow } from '@coreui/react'
 
 const ProductionHome = () => {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   useEffect(() => {
     dispatch({ type: 'set', activeModule: 'production' })
@@ -14,6 +16,7 @@ const ProductionHome = () => {
     {
       label: 'Projects Hierarchy',
       description: 'This form allows Add, Delete, and Update Project Details that includes Project’s Configurations, Batches, Batteries and Project Documents.',
+      to: '/production/treeview',
     },
     {
       label: 'Directorates And Sites',
@@ -45,10 +48,29 @@ const ProductionHome = () => {
 
   const renderButton = (action, idx) => {
     const accent = accentColors[idx % accentColors.length]
+    const isNavigable = Boolean(action.to)
+
+    const handleActivation = () => {
+      if (isNavigable) {
+        navigate(action.to)
+      }
+    }
 
     return (
       <CCol key={action.label} md={6} lg={4}>
-        <CCard className={`border-start border-4 border-${accent} h-100 shadow-sm`}>
+        <CCard
+          className={`border-start border-4 border-${accent} h-100 shadow-sm`}
+          role={isNavigable ? 'button' : undefined}
+          tabIndex={isNavigable ? 0 : undefined}
+          onClick={handleActivation}
+          onKeyDown={(event) => {
+            if (isNavigable && (event.key === 'Enter' || event.key === ' ')) {
+              event.preventDefault()
+              handleActivation()
+            }
+          }}
+          style={{ cursor: isNavigable ? 'pointer' : 'default' }}
+        >
           <CCardBody>
             <div className="d-flex align-items-start">
               <span className={`badge bg-${accent} me-3`}>{idx + 1}</span>
