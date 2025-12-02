@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   CContainer,
   CHeader,
+  CCollapse,
   CHeaderNav,
   CHeaderToggler,
   CNavItem,
@@ -41,6 +42,27 @@ const AppHeader = () => {
   const sidebarShow = useSelector((state) => state.sidebarShow)
   const activeModule = useSelector((state) => state.activeModule)
   const [hoveredMenu, setHoveredMenu] = useState(null)
+  const [navVisible, setNavVisible] = useState(
+    typeof window !== 'undefined' ? window.innerWidth >= 992 : true,
+  )
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== 'undefined' ? window.innerWidth >= 992 : true,
+  )
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isLarge = window.innerWidth >= 992
+      setIsDesktop(isLarge)
+      setNavVisible(isLarge)
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
 
   useEffect(() => {
     document.addEventListener('scroll', () => {
@@ -98,137 +120,161 @@ const AppHeader = () => {
         `}
       </style>
 
-      <CHeader position="sticky" className="mb-4 p-0 bg-dark text-white shadow-sm" ref={headerRef}>
-        <CContainer className="px-4" fluid>
-          {/* Sidebar Toggle */}
-          <CHeaderToggler
-            onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
-            style={{ marginInlineStart: '-14px' }}
-            className="text-white"
+      <CHeader
+        position="sticky"
+        className="mb-4 p-0 bg-dark text-white shadow-sm"
+        ref={headerRef}
+      >
+        <CContainer className="px-4 d-flex align-items-center gap-3 flex-wrap" fluid>
+          <div className="d-flex align-items-center gap-2">
+            {/* Sidebar Toggle */}
+            <CHeaderToggler
+              onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
+              style={{ marginInlineStart: '-14px' }}
+              className="text-white"
+            >
+              <CIcon icon={cilMenu} size="lg" />
+            </CHeaderToggler>
+
+            {/* Navbar Collapse Toggle */}
+            <button
+              type="button"
+              className="btn btn-outline-light btn-sm d-lg-none"
+              aria-expanded={navVisible}
+              aria-label="Toggle navigation"
+              onClick={() => setNavVisible((prev) => !prev)}
+            >
+              <CIcon icon={cilMenu} className="me-1" /> Menu
+            </button>
+          </div>
+
+          <CCollapse
+            className="flex-grow-1 w-100"
+            visible={navVisible || isDesktop}
+            style={{ transition: 'height 200ms ease' }}
           >
-            <CIcon icon={cilMenu} size="lg" />
-          </CHeaderToggler>
+            <div className="d-flex align-items-center flex-wrap gap-3">
+              {/* ─── Main Top Modules ─── */}
+              <CHeaderNav className="ms-0 d-flex align-items-center flex-wrap gap-2">
+                {/* Dashboard */}
+                <CNavItem>
+                  <CNavLink
+                    as="button"
+                    className={`btn btn-sm text-white ${
+                      activeModule === 'dashboard' ? 'fw-bold text-info' : ''
+                    }`}
+                    onClick={() => switchModule('dashboard', '/dashboard')}
+                  >
+                    <CIcon icon={cilSpeedometer} className="me-1" /> Dashboard
+                  </CNavLink>
+                </CNavItem>
 
-          {/* ─── Main Top Modules ─── */}
-          <CHeaderNav className="ms-3 d-flex align-items-center">
-            {/* Dashboard */}
-            <CNavItem>
-              <CNavLink
-                as="button"
-                className={`btn btn-sm text-white ${
-                  activeModule === 'dashboard' ? 'fw-bold text-info' : ''
-                }`}
-                onClick={() => switchModule('dashboard', '/dashboard')}
-              >
-                <CIcon icon={cilSpeedometer} className="me-1" /> Dashboard
-              </CNavLink>
-            </CNavItem>
+                {/* Production Module Hover */}
+                <div
+                  className="position-relative"
+                  onMouseEnter={() => setHoveredMenu('production')}
+                  onMouseLeave={() => setHoveredMenu(null)}
+                >
+                  <CNavLink
+                    as="button"
+                    className={`btn btn-sm text-white ${
+                      activeModule === 'production' ? 'fw-bold text-warning' : ''
+                    }`}
+                    onClick={() => switchModule('production', '/production')}
+                  >
+                    <CIcon icon={cilFactory} className="me-1" /> Production ▾
+                  </CNavLink>
 
-            {/* Production Module Hover */}
-            <div
-              className="position-relative ms-2"
-              onMouseEnter={() => setHoveredMenu('production')}
-              onMouseLeave={() => setHoveredMenu(null)}
-            >
-              <CNavLink
-                as="button"
-                className={`btn btn-sm text-white ${
-                  activeModule === 'production' ? 'fw-bold text-warning' : ''
-                }`}
-                onClick={() => switchModule('production', '/production')}
-              >
-                <CIcon icon={cilFactory} className="me-1" /> Production ▾
-              </CNavLink>
+                  <div className={`hover-menu ${hoveredMenu === 'production' ? 'show' : ''}`}>
+                    <DropdownItem href="#/production/create-project" icon={cilSettings} label="Add Project" />
+                    <DropdownItem href="#/production/add-set" icon={cilClipboard} label="Add Set" />
+                    <DropdownItem href="#/production/create-meeting" icon={cilBolt} label="Add Meeting" />
+                    <DropdownItem href="#/production/add-assy-parts" icon={cilChart} label="Add Assembly" />
+                    <DropdownItem href="#/production/add-status" icon={cilChart} label="Add Status" />
+                    <DropdownItem href="#/production/add-prm-status" icon={cilChart} label="Add PRM" />
+                    <DropdownItem href="#/production/add-critical-issue" icon={cilWarning} label="Add Issue" />
+                    <DropdownItem href="#/production/project-summary" icon={cilFactory} label="Project Summary" />
+                  </div>
+                </div>
 
-              <div className={`hover-menu ${hoveredMenu === 'production' ? 'show' : ''}`}>
-                <DropdownItem href="#/production/create-project" icon={cilSettings} label="Add Project" />
-                <DropdownItem href="#/production/add-set" icon={cilClipboard} label="Add Set" />
-                <DropdownItem href="#/production/create-meeting" icon={cilBolt} label="Add Meeting" />
-                <DropdownItem href="#/production/add-assy-parts" icon={cilChart} label="Add Assembly" />
-                <DropdownItem href="#/production/add-status" icon={cilChart} label="Add Status" />
-                <DropdownItem href="#/production/add-prm-status" icon={cilChart} label="Add PRM" />
-                <DropdownItem href="#/production/add-critical-issue" icon={cilWarning} label="Add Issue" />
-                <DropdownItem href="#/production/project-summary" icon={cilFactory} label="Project Summary" />
-              </div>
+                {/* Financial Module Hover */}
+                <div
+                  className="position-relative"
+                  onMouseEnter={() => setHoveredMenu('financial')}
+                  onMouseLeave={() => setHoveredMenu(null)}
+                >
+                  <CNavLink
+                    as="button"
+                    className={`btn btn-sm text-white ${
+                      activeModule === 'financial' ? 'fw-bold text-success' : ''
+                    }`}
+                    onClick={() => switchModule('financial', '/financial/treeview')}
+                  >
+                    <CIcon icon={cilMoney} className="me-1" /> Financial ▾
+                  </CNavLink>
+
+                  <div className={`hover-menu ${hoveredMenu === 'financial' ? 'show' : ''}`}>
+                    <DropdownItem href="#/financial/treeview" icon={cilChart} label="Financial Overview" />
+                    <DropdownItem href="#/financial/reports" icon={cilClipboard} label="Add Report" />
+                    <DropdownItem href="#/financial/expenses" icon={cilClipboard} label="Add Expense" />
+                    <DropdownItem href="#/financial/settings" icon={cilSettings} label="Add Config" />
+                  </div>
+                </div>
+              </CHeaderNav>
+
+              {/* ─── Right Icons + Profile ─── */}
+              <CHeaderNav className="ms-auto align-items-center gap-2 flex-wrap">
+                <CNavItem>
+                  <CNavLink href="#">
+                    <CIcon icon={cilBell} size="lg" />
+                  </CNavLink>
+                </CNavItem>
+                <CNavItem>
+                  <CNavLink href="#">
+                    <CIcon icon={cilList} size="lg" />
+                  </CNavLink>
+                </CNavItem>
+                <CNavItem>
+                  <CNavLink href="#">
+                    <CIcon icon={cilEnvelopeOpen} size="lg" />
+                  </CNavLink>
+                </CNavItem>
+                <li className="nav-item py-1">
+                  <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
+                </li>
+
+                {/* Theme Switcher */}
+                <CDropdown variant="nav-item" placement="bottom-end">
+                  <CNavLink as="button" className="text-white">
+                    {colorMode === 'dark' ? (
+                      <CIcon icon={cilMoon} size="lg" />
+                    ) : colorMode === 'auto' ? (
+                      <CIcon icon={cilContrast} size="lg" />
+                    ) : (
+                      <CIcon icon={cilSun} size="lg" />
+                    )}
+                  </CNavLink>
+                  <CDropdownMenu>
+                    <CDropdownItem onClick={() => setColorMode('light')}>
+                      <CIcon icon={cilSun} className="me-2" /> Light
+                    </CDropdownItem>
+                    <CDropdownItem onClick={() => setColorMode('dark')}>
+                      <CIcon icon={cilMoon} className="me-2" /> Dark
+                    </CDropdownItem>
+                    <CDropdownItem onClick={() => setColorMode('auto')}>
+                      <CIcon icon={cilContrast} className="me-2" /> Auto
+                    </CDropdownItem>
+                  </CDropdownMenu>
+                </CDropdown>
+
+                <li className="nav-item py-1">
+                  <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
+                </li>
+
+                <AppHeaderDropdown />
+              </CHeaderNav>
             </div>
-
-            {/* Financial Module Hover */}
-            <div
-              className="position-relative ms-2"
-              onMouseEnter={() => setHoveredMenu('financial')}
-              onMouseLeave={() => setHoveredMenu(null)}
-            >
-              <CNavLink
-                as="button"
-                className={`btn btn-sm text-white ${
-                  activeModule === 'financial' ? 'fw-bold text-success' : ''
-                }`}
-                onClick={() => switchModule('financial', '/financial/treeview')}
-              >
-                <CIcon icon={cilMoney} className="me-1" /> Financial ▾
-              </CNavLink>
-
-              <div className={`hover-menu ${hoveredMenu === 'financial' ? 'show' : ''}`}>
-                <DropdownItem href="#/financial/treeview" icon={cilChart} label="Financial Overview" />
-                <DropdownItem href="#/financial/reports" icon={cilClipboard} label="Add Report" />
-                <DropdownItem href="#/financial/expenses" icon={cilClipboard} label="Add Expense" />
-                <DropdownItem href="#/financial/settings" icon={cilSettings} label="Add Config" />
-              </div>
-            </div>
-          </CHeaderNav>
-
-          {/* ─── Right Icons + Profile ─── */}
-          <CHeaderNav className="ms-auto align-items-center">
-            <CNavItem>
-              <CNavLink href="#">
-                <CIcon icon={cilBell} size="lg" />
-              </CNavLink>
-            </CNavItem>
-            <CNavItem>
-              <CNavLink href="#">
-                <CIcon icon={cilList} size="lg" />
-              </CNavLink>
-            </CNavItem>
-            <CNavItem>
-              <CNavLink href="#">
-                <CIcon icon={cilEnvelopeOpen} size="lg" />
-              </CNavLink>
-            </CNavItem>
-
-            <li className="nav-item py-1">
-              <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
-            </li>
-
-            {/* Theme Switcher */}
-            <CDropdown variant="nav-item" placement="bottom-end">
-              <CNavLink as="button" className="text-white">
-                {colorMode === 'dark' ? (
-                  <CIcon icon={cilMoon} size="lg" />
-                ) : colorMode === 'auto' ? (
-                  <CIcon icon={cilContrast} size="lg" />
-                ) : (
-                  <CIcon icon={cilSun} size="lg" />
-                )}
-              </CNavLink>
-              <CDropdownMenu>
-                <CDropdownItem onClick={() => setColorMode('light')}>
-                  <CIcon icon={cilSun} className="me-2" /> Light
-                </CDropdownItem>
-                <CDropdownItem onClick={() => setColorMode('dark')}>
-                  <CIcon icon={cilMoon} className="me-2" /> Dark
-                </CDropdownItem>
-                <CDropdownItem onClick={() => setColorMode('auto')}>
-                  <CIcon icon={cilContrast} className="me-2" /> Auto
-                </CDropdownItem>
-              </CDropdownMenu>
-            </CDropdown>
-
-            <li className="nav-item py-1">
-              <div className="vr h-100 mx-2 text-body text-opacity-75"></div>
-            </li>
-
-            <AppHeaderDropdown />
-          </CHeaderNav>
+          </CCollapse>
         </CContainer>
 
         {/* Breadcrumb */}
