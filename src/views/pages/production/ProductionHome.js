@@ -56,8 +56,6 @@ const ProductionHome = () => {
     </CCol>
   )
 
-  const buttons = [...setupActions, ...viewActions]
-
   return (
     <CContainer fluid className="py-4">
       <CCard className="shadow-sm border-0">
