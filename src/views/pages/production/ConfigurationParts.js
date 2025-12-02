@@ -10,8 +10,6 @@ import {
   CForm,
   CFormInput,
   CFormSelect,
-  CListGroup,
-  CListGroupItem,
   CNav,
   CNavItem,
   CNavLink,
@@ -24,7 +22,7 @@ import {
   CTableRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilChevronRight, cilPlus } from '@coreui/icons'
+import { cilPlus } from '@coreui/icons'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -277,51 +275,6 @@ const ConfigurationParts = () => {
     setSelectedPartId(form.id)
   }
 
-  const renderTree = () => (
-    <CCard className="shadow-sm border-0 h-100">
-      <CCardHeader className="bg-dark text-white fw-semibold">Configuration Tree</CCardHeader>
-      <CCardBody className="p-0">
-        <CListGroup flush>
-          {availableSets.map((set) => (
-            <React.Fragment key={set.id}>
-              <CListGroupItem
-                action
-                active={selectedSetId === set.id}
-                className="d-flex justify-content-between align-items-center"
-                onClick={() => setSelectedSetId(set.id)}
-              >
-                <span className="fw-semibold">{set.name}</span>
-                <CBadge color="secondary" shape="rounded-pill">
-                  {set.parts.length} parts
-                </CBadge>
-              </CListGroupItem>
-              {selectedSetId === set.id && (
-                <div className="ps-4">
-                  {set.parts.map((part) => (
-                    <CListGroupItem
-                      key={part.id}
-                      action
-                      onClick={() => setSelectedPartId(part.id)}
-                      active={selectedPartId === part.id}
-                      className="border-0 border-top"
-                    >
-                      <CIcon icon={cilChevronRight} className="me-2 text-secondary" />
-                      <span className="fw-semibold">{part.id}</span> — {part.name}
-                    </CListGroupItem>
-                  ))}
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-
-          {!availableSets.length && (
-            <CListGroupItem className="text-body-secondary">No sets for this project yet.</CListGroupItem>
-          )}
-        </CListGroup>
-      </CCardBody>
-    </CCard>
-  )
-
   return (
     <CContainer fluid className="py-4">
       <CNav variant="tabs" className="mb-3">
@@ -349,10 +302,7 @@ const ConfigurationParts = () => {
       </CNav>
 
       <CRow className="g-3">
-        <CCol md={4} lg={3}>
-          {renderTree()}
-        </CCol>
-        <CCol md={8} lg={9}>
+        <CCol xs={12}>
           <CCard className="shadow-sm border-0 mb-3">
             <CCardHeader className="bg-primary text-white d-flex align-items-center justify-content-between">
               <span className="fw-semibold">Configuration Parts</span>
