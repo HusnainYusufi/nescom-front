@@ -43,11 +43,24 @@ const AppSidebar = () => {
     activeProjectId ? [activeProjectId] : projects.length ? [projects[0].id] : [],
   )
 
+  // Track when we should switch to an overlaid mobile sidebar
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 992 : false,
+  )
+
   useEffect(() => {
     if (activeProjectId && !openProjects.includes(activeProjectId)) {
       setOpenProjects((prev) => [...prev, activeProjectId])
     }
   }, [activeProjectId, openProjects])
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 992)
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const projectSections = useMemo(
     () => [
@@ -168,6 +181,9 @@ const AppSidebar = () => {
   return (
     <CSidebar
       position="fixed"
+      breakpoint="lg"
+      overlaid={isMobile}
+      narrow={!isMobile && unfoldable}
       visible={sidebarShow}
       unfoldable={unfoldable}
       onVisibleChange={(visible) => dispatch({ type: 'set', sidebarShow: visible })}
