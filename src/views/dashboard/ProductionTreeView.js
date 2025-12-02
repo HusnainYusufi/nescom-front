@@ -1,7 +1,7 @@
 // src/views/dashboard/ProductionTreeView.js
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   CButton,
   CCard,
@@ -32,8 +32,13 @@ import { cilPlus } from '@coreui/icons'
 const ProductionTreeView = () => {
   const dispatch = useDispatch()
   const location = useLocation()
+  const navigate = useNavigate()
   const projects = useSelector((state) => state.projects)
   const activeProjectId = useSelector((state) => state.activeProjectId)
+  const validSections = useMemo(
+    () => ['general', 'configuration', 'production', 'materials', 'reports', 'administration'],
+    [],
+  )
 
   const [form, setForm] = useState({
     name: '',
@@ -46,21 +51,41 @@ const ProductionTreeView = () => {
   })
   const [errors, setErrors] = useState({})
   const [showAddModal, setShowAddModal] = useState(false)
+  const [activeSection, setActiveSection] = useState('general')
 
   useEffect(() => {
     dispatch({ type: 'set', activeModule: 'production' })
     const params = new URLSearchParams(location.search)
     const projectFromUrl = params.get('project')
+    const sectionFromUrl = params.get('section')
     if (projectFromUrl) {
       dispatch({ type: 'setActiveProject', projectId: projectFromUrl })
     } else if (!activeProjectId && projects[0]) {
       dispatch({ type: 'setActiveProject', projectId: projects[0].id })
     }
-  }, [location.search, projects, activeProjectId, dispatch])
+
+    if (sectionFromUrl && validSections.includes(sectionFromUrl)) {
+      setActiveSection(sectionFromUrl)
+    } else {
+      setActiveSection('general')
+    }
+  }, [location.search, projects, activeProjectId, dispatch, validSections])
 
   const handleInputChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
     setErrors((prev) => ({ ...prev, [e.target.name]: '' }))
+  }
+
+  const handleSectionChange = (section) => {
+    setActiveSection(section)
+
+    const params = new URLSearchParams(location.search)
+    if (section === 'general') {
+      params.delete('section')
+    } else {
+      params.set('section', section)
+    }
+    navigate({ search: params.toString() }, { replace: true })
   }
 
   const validate = () => {
@@ -73,6 +98,35 @@ const ProductionTreeView = () => {
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
+
+  const configurationOptions = [
+    {
+      title: 'Configuration Parts',
+      description: 'Contains detail of parts revision and revision of helping materials.',
+    },
+    {
+      title: 'Build Configuration',
+      description:
+        'This Build Configuration form allows Add, Delete, Replace and View parts under configuration.',
+    },
+    {
+      title: 'Copy Configuration',
+      description: 'You can copy configuration into newly defined Project. It saves your time.',
+    },
+    {
+      title: 'Assembly Configuration Auxiliary Material',
+      description:
+        "You can Add, Delete, Update and view details of Assembly Auxiliary Materials like Fasteners, Cable, Gaskets, Helexs, Modules, O'rings, and Washers.",
+    },
+    {
+      title: 'Qualification Tests on Parts',
+      description: "Contains Qualification C's Tests Details.",
+    },
+    {
+      title: 'Phase and Activities Applies on a Part',
+      description: 'You can add Phase and Activities details for a part.',
+    },
+  ]
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -97,80 +151,140 @@ const ProductionTreeView = () => {
     <CContainer fluid className="py-4">
       <CNav variant="tabs" className="mb-3">
         <CNavItem>
-          <CNavLink active>General</CNavLink>
+          <CNavLink active={activeSection === 'general'} onClick={() => handleSectionChange('general')}>
+            General
+          </CNavLink>
         </CNavItem>
         <CNavItem>
-          <CNavLink disabled>Configuration</CNavLink>
+          <CNavLink
+            active={activeSection === 'configuration'}
+            onClick={() => handleSectionChange('configuration')}
+          >
+            Configuration
+          </CNavLink>
         </CNavItem>
         <CNavItem>
-          <CNavLink disabled>Production</CNavLink>
+          <CNavLink
+            active={activeSection === 'production'}
+            onClick={() => handleSectionChange('production')}
+          >
+            Production
+          </CNavLink>
         </CNavItem>
         <CNavItem>
-          <CNavLink disabled>Materials</CNavLink>
+          <CNavLink active={activeSection === 'materials'} onClick={() => handleSectionChange('materials')}>
+            Materials
+          </CNavLink>
         </CNavItem>
         <CNavItem>
-          <CNavLink disabled>Reports</CNavLink>
+          <CNavLink active={activeSection === 'reports'} onClick={() => handleSectionChange('reports')}>
+            Reports
+          </CNavLink>
         </CNavItem>
         <CNavItem>
-          <CNavLink disabled>Administration</CNavLink>
+          <CNavLink
+            active={activeSection === 'administration'}
+            onClick={() => handleSectionChange('administration')}
+          >
+            Administration
+          </CNavLink>
         </CNavItem>
       </CNav>
-      <CRow>
-        <CCol xs={12}>
-          <CCard className="shadow-sm border-0">
-            <CCardHeader className="bg-primary text-white d-flex align-items-center justify-content-between">
-              <span className="fw-semibold">Projects Hierarchy</span>
-              <CButton color="warning" size="sm" className="text-dark fw-semibold" onClick={() => setShowAddModal(true)}>
-                <CIcon icon={cilPlus} className="me-1" /> Add Project
-              </CButton>
-            </CCardHeader>
-            <CCardBody className="p-0">
-              <CTable hover responsive className="mb-0 align-middle">
-                <CTableHead className="bg-body-secondary text-uppercase">
-                  <CTableRow>
-                    <CTableHeaderCell scope="col" style={{ width: '64px' }}></CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Code*</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Name*</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Description</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">System</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  <CTableRow role="button" onClick={() => setShowAddModal(true)} className="bg-light">
-                    <CTableDataCell colSpan={5} className="fw-semibold text-primary">
-                      Please click here to add new row...
-                    </CTableDataCell>
-                  </CTableRow>
-                  {projects.length === 0 ? (
+      {activeSection === 'general' && (
+        <CRow>
+          <CCol xs={12}>
+            <CCard className="shadow-sm border-0">
+              <CCardHeader className="bg-primary text-white d-flex align-items-center justify-content-between">
+                <span className="fw-semibold">Projects Hierarchy</span>
+                <CButton
+                  color="warning"
+                  size="sm"
+                  className="text-dark fw-semibold"
+                  onClick={() => setShowAddModal(true)}
+                >
+                  <CIcon icon={cilPlus} className="me-1" /> Add Project
+                </CButton>
+              </CCardHeader>
+              <CCardBody className="p-0">
+                <CTable hover responsive className="mb-0 align-middle">
+                  <CTableHead className="bg-body-secondary text-uppercase">
                     <CTableRow>
-                      <CTableDataCell colSpan={5} className="text-center text-body-secondary py-4">
-                        No projects available. Use the Add Project button to create one.
+                      <CTableHeaderCell scope="col" style={{ width: '64px' }}></CTableHeaderCell>
+                      <CTableHeaderCell scope="col">Code*</CTableHeaderCell>
+                      <CTableHeaderCell scope="col">Name*</CTableHeaderCell>
+                      <CTableHeaderCell scope="col">Description</CTableHeaderCell>
+                      <CTableHeaderCell scope="col">System</CTableHeaderCell>
+                    </CTableRow>
+                  </CTableHead>
+                  <CTableBody>
+                    <CTableRow role="button" onClick={() => setShowAddModal(true)} className="bg-light">
+                      <CTableDataCell colSpan={5} className="fw-semibold text-primary">
+                        Please click here to add new row...
                       </CTableDataCell>
                     </CTableRow>
-                  ) : (
-                    projects.map((project) => (
-                      <CTableRow
-                        key={project.id}
-                        active={activeProjectId === project.id}
-                        role="button"
-                        onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
-                      >
-                        <CTableDataCell className="text-body-secondary">▸</CTableDataCell>
-                        <CTableDataCell className="fw-semibold">{project.code}</CTableDataCell>
-                        <CTableDataCell>{project.name}</CTableDataCell>
-                        <CTableDataCell className="text-wrap" style={{ maxWidth: '640px' }}>
-                          {project.description || '—'}
+                    {projects.length === 0 ? (
+                      <CTableRow>
+                        <CTableDataCell colSpan={5} className="text-center text-body-secondary py-4">
+                          No projects available. Use the Add Project button to create one.
                         </CTableDataCell>
-                        <CTableDataCell>{project.system || '—'}</CTableDataCell>
                       </CTableRow>
-                    ))
-                  )}
-                </CTableBody>
-              </CTable>
-            </CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
+                    ) : (
+                      projects.map((project) => (
+                        <CTableRow
+                          key={project.id}
+                          active={activeProjectId === project.id}
+                          role="button"
+                          onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
+                        >
+                          <CTableDataCell className="text-body-secondary">▸</CTableDataCell>
+                          <CTableDataCell className="fw-semibold">{project.code}</CTableDataCell>
+                          <CTableDataCell>{project.name}</CTableDataCell>
+                          <CTableDataCell className="text-wrap" style={{ maxWidth: '640px' }}>
+                            {project.description || '—'}
+                          </CTableDataCell>
+                          <CTableDataCell>{project.system || '—'}</CTableDataCell>
+                        </CTableRow>
+                      ))
+                    )}
+                  </CTableBody>
+                </CTable>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+
+      {activeSection === 'configuration' && (
+        <CRow className="g-3">
+          <CCol xs={12}>
+            <CCard className="shadow-sm border-0 h-100">
+              <CCardHeader className="bg-primary text-white fw-semibold">Configuration Main Form</CCardHeader>
+              <CCardBody>
+                <p className="text-body-secondary mb-4">
+                  Configuration Main Form now includes the following options:
+                </p>
+                <CRow className="g-3">
+                  {configurationOptions.map((option, index) => (
+                    <CCol md={6} key={option.title}>
+                      <CCard className="h-100 border-start border-4 border-warning shadow-sm">
+                        <CCardBody>
+                          <div className="d-flex align-items-start">
+                            <span className="badge text-bg-warning text-dark me-3">{index + 1}</span>
+                            <div>
+                              <h6 className="fw-semibold mb-2">{option.title}</h6>
+                              <p className="text-body-secondary mb-0 small">{option.description}</p>
+                            </div>
+                          </div>
+                        </CCardBody>
+                      </CCard>
+                    </CCol>
+                  ))}
+                </CRow>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
 
       <CModal alignment="center" visible={showAddModal} onClose={() => setShowAddModal(false)}>
         <CModalHeader className="fw-semibold">Add Project</CModalHeader>
