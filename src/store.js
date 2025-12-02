@@ -15,6 +15,7 @@ const initialState = {
       description: 'Baseline airframe with electrical and composite work packages.',
       status: 'In Configuration',
       owner: 'Systems Team',
+      system: 'Guidance & Control',
     },
     {
       id: 'proj-002',
@@ -23,6 +24,7 @@ const initialState = {
       description: 'Surveillance platform focused on propulsion and avionics integration.',
       status: 'In Production',
       owner: 'Flight Test',
+      system: 'ISR Platform',
     },
   ],
   selection: {
