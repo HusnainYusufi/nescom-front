@@ -13,13 +13,12 @@ import {
 import CIcon from '@coreui/icons-react'
 import {
   cilFactory,
-  cilFolderOpen,
-  cilPlus,
-  cilClipboard,
+  cilMap,
+  cilTags,
+  cilTask,
   cilCheckCircle,
-  cilLayers,
-  cilChart,
   cilWarning,
+  cilListRich,
 } from '@coreui/icons'
 
 const ProductionHome = () => {
@@ -139,21 +138,14 @@ const ProductionHome = () => {
 
   return (
     <CContainer fluid className="py-4">
-      <CRow className="g-4">
-        <CCol lg={6}>
-          <CCard className="shadow-sm border-0 h-100">
-            <CCardHeader className="bg-primary text-white fw-semibold">Production Actions</CCardHeader>
-            <CCardBody className="d-grid gap-3">{setupActions.map((action) => buildButton(action))}</CCardBody>
-          </CCard>
-        </CCol>
-
-        <CCol lg={6}>
-          <CCard className="shadow-sm border-0 h-100">
-            <CCardHeader className="bg-dark text-white fw-semibold">Reports & Views</CCardHeader>
-            <CCardBody className="d-grid gap-3">{viewActions.map((action) => buildButton(action))}</CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
+      <CCard className="shadow-sm border-0">
+        <CCardHeader className="bg-primary text-white fw-semibold">
+          Production Setup & Navigation
+        </CCardHeader>
+        <CCardBody>
+          <CRow className="g-3">{buttons.map((action) => renderButton(action))}</CRow>
+        </CCardBody>
+      </CCard>
     </CContainer>
   )
 }
