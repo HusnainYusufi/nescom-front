@@ -11,7 +11,16 @@ import {
   CRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilChevronRight, cilLibraryAdd } from '@coreui/icons'
+import {
+  cilFactory,
+  cilFolderOpen,
+  cilPlus,
+  cilClipboard,
+  cilCheckCircle,
+  cilLayers,
+  cilChart,
+  cilWarning,
+} from '@coreui/icons'
 
 const ProductionHome = () => {
   const dispatch = useDispatch()
@@ -22,82 +31,56 @@ const ProductionHome = () => {
 
   const buildButton = (action) => (
     <Link
-      key={action.label}
+      key={action.to}
       to={action.to}
-      className="btn btn-outline-primary bg-white text-start w-100 p-4 shadow-sm border-2 rounded-4 d-flex justify-content-between align-items-center"
+      className="btn btn-light border d-flex align-items-center justify-content-between text-start w-100"
     >
-      <div>
-        <div className="d-flex align-items-center gap-2 mb-1">
-          <CIcon icon={cilLibraryAdd} className="text-primary" />
-          <span className="fw-bold fs-5 text-primary">{action.label}</span>
-        </div>
-        <small className="text-body-secondary">{action.description}</small>
+      <div className="d-flex align-items-center">
+        <CIcon icon={action.icon} className="me-2 text-primary" />
+        <span className="fw-semibold">{action.label}</span>
       </div>
-      <CIcon icon={cilChevronRight} className="text-primary" size="lg" />
+      {action.note && <small className="text-body-secondary ms-3">{action.note}</small>}
     </Link>
   )
 
-  const actions = [
-    {
-      label: 'Projects Hierarchy',
-      description:
-        "This form allows Add, Delete, and Update Project Details that includes Project's Configurations, Batches, Batteries and Project Documents.",
-      to: '/production/treeview',
-    },
-    {
-      label: 'Directorates And Sites',
-      description: 'Here you can Add, Delete, and Update Directorates, Sub-Directorates and Sites.',
-      to: '#',
-    },
-    {
-      label: 'Part Types, Categories and Material Forms',
-      description: 'Here you can Add, Delete, Update and view all possible Materials, Part Categories and Part Types.',
-      to: '#',
-    },
-    {
-      label: 'Activities And Phases',
-      description: 'Here you can Add, Delete, Update and View all possible Activities and Phases.',
-      to: '#',
-    },
-    {
-      label: 'QC Test Names',
-      description: 'Here you can Add, Delete, Update and View all QC Test Names.',
-      to: '#',
-    },
-    {
-      label: 'NCR Presentation',
-      description: 'New NCR form.',
-      to: '#',
-    },
-    {
-      label: 'NCR Reason',
-      description: 'New NCR form.',
-      to: '#',
-    },
+  const setupActions = [
+    { label: 'Projects Hierarchy', to: '/production/treeview', icon: cilFactory, note: 'Browse and manage projects' },
+    { label: 'Add Project', to: '/production/create-project', icon: cilPlus, note: 'Create a new project record' },
+    { label: 'Add Set', to: '/production/add-set', icon: cilLayers, note: 'Attach sets to a project' },
+    { label: 'Add Meeting', to: '/production/create-meeting', icon: cilClipboard, note: 'Schedule project meetings' },
+    { label: 'Add Assembly Parts', to: '/production/add-assy-parts', icon: cilFolderOpen, note: 'Register assemblies and parts' },
+    { label: 'Add Status', to: '/production/add-status', icon: cilCheckCircle, note: 'Record configuration status' },
+    { label: 'Add PRM Status', to: '/production/add-prm-status', icon: cilCheckCircle, note: 'Track PRM milestones' },
+    { label: 'Project Summary', to: '/production/project-summary', icon: cilChart, note: 'View a project rollup' },
+  ]
+
+  const viewActions = [
+    { label: 'View Projects', to: '/production/view-projects', icon: cilFactory },
+    { label: 'View Sets', to: '/production/view-sets', icon: cilLayers },
+    { label: 'View Meetings', to: '/production/view-meetings', icon: cilClipboard },
+    { label: 'View Assembly', to: '/production/view-assembly', icon: cilFolderOpen },
+    { label: 'View Status', to: '/production/view-status', icon: cilCheckCircle },
+    { label: 'View PRM', to: '/production/view-prm', icon: cilCheckCircle },
+    { label: 'View Issues', to: '/production/view-issues', icon: cilWarning },
   ]
 
   return (
     <CContainer fluid className="py-4">
-      <CCard className="border-0 shadow-sm rounded-4 overflow-hidden">
-        <CCardHeader className="bg-primary text-white py-3">
-          <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
-            <div>
-              <div className="fw-bold fs-5">Production</div>
-              <small className="text-white-50">General Main Form now includes:</small>
-            </div>
-            <span className="badge bg-white text-primary fw-semibold px-3 py-2">Production Suite</span>
-          </div>
-        </CCardHeader>
-        <CCardBody className="bg-light">
-          <CRow className="g-3">
-            {actions.map((action) => (
-              <CCol key={action.label} xs={12} md={6} xl={4}>
-                {buildButton(action)}
-              </CCol>
-            ))}
-          </CRow>
-        </CCardBody>
-      </CCard>
+      <CRow className="g-4">
+        <CCol lg={6}>
+          <CCard className="shadow-sm border-0 h-100">
+            <CCardHeader className="bg-primary text-white fw-semibold">Production Actions</CCardHeader>
+            <CCardBody className="d-grid gap-3">{setupActions.map((action) => buildButton(action))}</CCardBody>
+          </CCard>
+        </CCol>
+
+        <CCol lg={6}>
+          <CCard className="shadow-sm border-0 h-100">
+            <CCardHeader className="bg-dark text-white fw-semibold">Reports & Views</CCardHeader>
+            <CCardBody className="d-grid gap-3">{viewActions.map((action) => buildButton(action))}</CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
     </CContainer>
   )
 }
