@@ -20,6 +20,11 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilPlus } from '@coreui/icons'
@@ -146,6 +151,7 @@ const ConfigurationParts = () => {
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [selectedSetId, setSelectedSetId] = useState('')
   const [selectedPartId, setSelectedPartId] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
   const [form, setForm] = useState({
     id: '',
     name: '',
@@ -273,6 +279,7 @@ const ConfigurationParts = () => {
 
     setForm({ id: '', name: '', shortName: '', category: '', type: '', level: '', owner: '', status: 'Draft' })
     setSelectedPartId(form.id)
+    setShowAddModal(false)
   }
 
   return (
@@ -306,7 +313,7 @@ const ConfigurationParts = () => {
           <CCard className="shadow-sm border-0 mb-3">
             <CCardHeader className="bg-primary text-white d-flex align-items-center justify-content-between">
               <span className="fw-semibold">Configuration Parts</span>
-              <div className="d-flex gap-2">
+              <div className="d-flex align-items-center gap-2">
                 <CFormSelect
                   size="sm"
                   value={selectedProjectId}
@@ -336,6 +343,16 @@ const ConfigurationParts = () => {
                     </option>
                   ))}
                 </CFormSelect>
+                <CButton
+                  color="light"
+                  size="sm"
+                  className="text-primary fw-semibold"
+                  onClick={() => setShowAddModal(true)}
+                  disabled={!selectedSetId}
+                >
+                  <CIcon icon={cilPlus} className="me-2" />
+                  Add Part
+                </CButton>
               </div>
             </CCardHeader>
             <CCardBody className="p-0">
@@ -380,123 +397,136 @@ const ConfigurationParts = () => {
               </CTable>
             </CCardBody>
           </CCard>
-
-          <CCard className="shadow-sm border-0">
-            <CCardHeader className="bg-light fw-semibold d-flex align-items-center gap-2">
-              <CIcon icon={cilPlus} className="text-primary" />
-              Add Configuration Part
-            </CCardHeader>
-            <CCardBody>
-              <CForm onSubmit={handleAddPart} className="row g-3">
-                <CCol md={4}>
-                  <CFormInput
-                    label="Part Id*"
-                    value={form.id}
-                    onChange={(e) => setForm({ ...form, id: e.target.value })}
-                    invalid={!!errors.id}
-                    feedbackInvalid={errors.id}
-                  />
-                </CCol>
-                <CCol md={4}>
-                  <CFormInput
-                    label="Name*"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    invalid={!!errors.name}
-                    feedbackInvalid={errors.name}
-                  />
-                </CCol>
-                <CCol md={4}>
-                  <CFormInput
-                    label="Short Name"
-                    value={form.shortName}
-                    onChange={(e) => setForm({ ...form, shortName: e.target.value })}
-                  />
-                </CCol>
-
-                <CCol md={4}>
-                  <CFormSelect
-                    label="Category*"
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    invalid={!!errors.category}
-                    feedbackInvalid={errors.category}
-                  >
-                    <option value="">Select</option>
-                    <option value="Sensors">Sensors</option>
-                    <option value="Actuator">Actuator</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Processor">Processor</option>
-                    <option value="Structure">Structure</option>
-                    <option value="Power">Power</option>
-                    <option value="Harness">Harness</option>
-                  </CFormSelect>
-                </CCol>
-                <CCol md={4}>
-                  <CFormSelect
-                    label="Type*"
-                    value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value })}
-                    invalid={!!errors.type}
-                    feedbackInvalid={errors.type}
-                  >
-                    <option value="">Select</option>
-                    <option value="Electronic">Electronic</option>
-                    <option value="Mechanical">Mechanical</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Digital">Digital</option>
-                    <option value="Composite">Composite</option>
-                  </CFormSelect>
-                </CCol>
-                <CCol md={4}>
-                  <CFormSelect
-                    label="Part Level*"
-                    value={form.level}
-                    onChange={(e) => setForm({ ...form, level: e.target.value })}
-                    invalid={!!errors.level}
-                    feedbackInvalid={errors.level}
-                  >
-                    <option value="">Select level</option>
-                    <option value="L1">L1 - System</option>
-                    <option value="L2">L2 - Sub System</option>
-                    <option value="L3">L3 - Assembly</option>
-                    <option value="L4">L4 - Sub Assembly</option>
-                  </CFormSelect>
-                </CCol>
-
-                <CCol md={6}>
-                  <CFormInput
-                    label="Owner"
-                    value={form.owner}
-                    onChange={(e) => setForm({ ...form, owner: e.target.value })}
-                  />
-                </CCol>
-                <CCol md={6}>
-                  <CFormSelect
-                    label="Status"
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  >
-                    <option>Draft</option>
-                    <option>Under Review</option>
-                    <option>Qualified</option>
-                  </CFormSelect>
-                </CCol>
-
-                <CCol xs={12} className="d-flex justify-content-end gap-2">
-                  <CButton color="secondary" variant="outline" onClick={() => setForm({ id: '', name: '', shortName: '', category: '', type: '', level: '', owner: '', status: 'Draft' })}>
-                    Reset
-                  </CButton>
-                  <CButton color="primary" type="submit" disabled={!selectedSetId}>
-                    <CIcon icon={cilPlus} className="me-2" />
-                    Add Part
-                  </CButton>
-                </CCol>
-              </CForm>
-            </CCardBody>
-          </CCard>
         </CCol>
       </CRow>
+
+      <CModal
+        visible={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        alignment="center"
+        scrollable
+        backdrop="static"
+      >
+        <CForm onSubmit={handleAddPart}>
+          <CModalHeader closeButton>
+            <CModalTitle>Add Configuration Part</CModalTitle>
+          </CModalHeader>
+          <CModalBody>
+            <CRow className="g-3">
+              <CCol md={6}>
+                <CFormInput
+                  label="Part Id*"
+                  value={form.id}
+                  onChange={(e) => setForm({ ...form, id: e.target.value })}
+                  invalid={!!errors.id}
+                  feedbackInvalid={errors.id}
+                />
+              </CCol>
+              <CCol md={6}>
+                <CFormInput
+                  label="Name*"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  invalid={!!errors.name}
+                  feedbackInvalid={errors.name}
+                />
+              </CCol>
+              <CCol md={6}>
+                <CFormInput
+                  label="Short Name"
+                  value={form.shortName}
+                  onChange={(e) => setForm({ ...form, shortName: e.target.value })}
+                />
+              </CCol>
+              <CCol md={6}>
+                <CFormSelect
+                  label="Category*"
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  invalid={!!errors.category}
+                  feedbackInvalid={errors.category}
+                >
+                  <option value="">Select</option>
+                  <option value="Sensors">Sensors</option>
+                  <option value="Actuator">Actuator</option>
+                  <option value="Electronics">Electronics</option>
+                  <option value="Processor">Processor</option>
+                  <option value="Structure">Structure</option>
+                  <option value="Power">Power</option>
+                  <option value="Harness">Harness</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md={6}>
+                <CFormSelect
+                  label="Type*"
+                  value={form.type}
+                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                  invalid={!!errors.type}
+                  feedbackInvalid={errors.type}
+                >
+                  <option value="">Select</option>
+                  <option value="Electronic">Electronic</option>
+                  <option value="Mechanical">Mechanical</option>
+                  <option value="Electrical">Electrical</option>
+                  <option value="Digital">Digital</option>
+                  <option value="Composite">Composite</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md={6}>
+                <CFormSelect
+                  label="Part Level*"
+                  value={form.level}
+                  onChange={(e) => setForm({ ...form, level: e.target.value })}
+                  invalid={!!errors.level}
+                  feedbackInvalid={errors.level}
+                >
+                  <option value="">Select level</option>
+                  <option value="L1">L1 - System</option>
+                  <option value="L2">L2 - Sub System</option>
+                  <option value="L3">L3 - Assembly</option>
+                  <option value="L4">L4 - Sub Assembly</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md={6}>
+                <CFormInput
+                  label="Owner"
+                  value={form.owner}
+                  onChange={(e) => setForm({ ...form, owner: e.target.value })}
+                />
+              </CCol>
+              <CCol md={6}>
+                <CFormSelect
+                  label="Status"
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                >
+                  <option>Draft</option>
+                  <option>Under Review</option>
+                  <option>Qualified</option>
+                </CFormSelect>
+              </CCol>
+            </CRow>
+          </CModalBody>
+          <CModalFooter className="d-flex justify-content-between">
+            <CButton
+              color="secondary"
+              variant="outline"
+              onClick={() => setForm({ id: '', name: '', shortName: '', category: '', type: '', level: '', owner: '', status: 'Draft' })}
+            >
+              Reset
+            </CButton>
+            <div className="d-flex gap-2">
+              <CButton color="light" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </CButton>
+              <CButton color="primary" type="submit" disabled={!selectedSetId}>
+                <CIcon icon={cilPlus} className="me-2" />
+                Add Part
+              </CButton>
+            </div>
+          </CModalFooter>
+        </CForm>
+      </CModal>
     </CContainer>
   )
 }
