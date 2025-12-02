@@ -125,7 +125,10 @@ const AppHeader = () => {
         className="mb-4 p-0 bg-dark text-white shadow-sm"
         ref={headerRef}
       >
-        <CContainer className="px-4 d-flex align-items-center gap-3 flex-wrap" fluid>
+        <CContainer
+          className="px-4 d-flex align-items-center gap-3 flex-wrap flex-lg-nowrap"
+          fluid
+        >
           <div className="d-flex align-items-center gap-2">
             {/* Sidebar Toggle */}
             <CHeaderToggler
@@ -149,7 +152,7 @@ const AppHeader = () => {
           </div>
 
           <CCollapse
-            className="flex-grow-1 w-100"
+            className="flex-grow-1 w-100 w-lg-auto"
             visible={navVisible || isDesktop}
             style={{ transition: 'height 200ms ease' }}
           >
