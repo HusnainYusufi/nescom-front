@@ -1,9 +1,8 @@
 // src/views/dashboard/ProductionTreeView.js
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useLocation } from 'react-router-dom'
 import {
-  CBadge,
   CButton,
   CCard,
   CCardBody,
@@ -12,8 +11,6 @@ import {
   CContainer,
   CFormInput,
   CFormSelect,
-  CListGroup,
-  CListGroupItem,
   CModal,
   CModalBody,
   CModalFooter,
@@ -30,7 +27,7 @@ import {
   CTableRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilFolderOpen, cilLayers, cilPlus, cilSettings } from '@coreui/icons'
+import { cilPlus } from '@coreui/icons'
 
 const ProductionTreeView = () => {
   const dispatch = useDispatch()
@@ -49,7 +46,6 @@ const ProductionTreeView = () => {
   })
   const [errors, setErrors] = useState({})
   const [showAddModal, setShowAddModal] = useState(false)
-  const [expandedNodes, setExpandedNodes] = useState({})
 
   useEffect(() => {
     dispatch({ type: 'set', activeModule: 'production' })
@@ -61,17 +57,6 @@ const ProductionTreeView = () => {
       dispatch({ type: 'setActiveProject', projectId: projects[0].id })
     }
   }, [location.search, projects, activeProjectId, dispatch])
-
-  const activeProject = useMemo(
-    () => projects.find((p) => p.id === activeProjectId) || projects[0],
-    [projects, activeProjectId],
-  )
-
-  const projectSections = [
-    { key: 'general', label: 'General', icon: cilFolderOpen },
-    { key: 'configuration', label: 'Configuration', icon: cilSettings },
-    { key: 'production', label: 'Production', icon: cilLayers },
-  ]
 
   const handleInputChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -108,64 +93,6 @@ const ProductionTreeView = () => {
     setShowAddModal(false)
   }
 
-  const baseTree = [
-    {
-      id: 'configurations',
-      label: 'Configurations',
-      children: [
-        { id: 'batches', label: 'Batches' },
-        { id: 'batteries', label: 'Batteries' },
-        { id: 'documents', label: 'Project Documents' },
-      ],
-    },
-    {
-      id: 'production',
-      label: 'Production',
-      children: [
-        { id: 'sets', label: 'Sets' },
-        { id: 'assemblies', label: 'Assemblies' },
-        { id: 'parts', label: 'Parts' },
-      ],
-    },
-  ]
-
-  const toggleNode = (nodeId) => {
-    setExpandedNodes((prev) => ({ ...prev, [nodeId]: !prev[nodeId] }))
-  }
-
-  const renderNode = (node, depth = 0, prefix = '') => {
-    const hasChildren = node.children && node.children.length > 0
-    const id = `${prefix}${node.id}`
-    const isExpanded = expandedNodes[id] ?? depth === 0
-
-    return (
-      <li key={id} className="mb-1">
-        <div
-          className="d-flex align-items-center gap-2"
-          role="button"
-          onClick={() => (hasChildren ? toggleNode(id) : null)}
-          style={{ paddingLeft: depth * 14 }}
-        >
-          {hasChildren ? (
-            <span className="text-muted small" style={{ width: 12 }}>
-              {isExpanded ? '▾' : '▸'}
-            </span>
-          ) : (
-            <span className="text-muted small" style={{ width: 12 }}>
-              •
-            </span>
-          )}
-          <span className="small text-body">{node.label}</span>
-        </div>
-        {hasChildren && isExpanded && (
-          <ul className="list-unstyled ms-0 mt-1 mb-0 border-start border-secondary-subtle ps-3">
-            {node.children.map((child) => renderNode(child, depth + 1, `${id}-`))}
-          </ul>
-        )}
-      </li>
-    )
-  }
-
   return (
     <CContainer fluid className="py-4">
       <CNav variant="tabs" className="mb-3">
@@ -188,87 +115,32 @@ const ProductionTreeView = () => {
           <CNavLink disabled>Administration</CNavLink>
         </CNavItem>
       </CNav>
-      <CRow className="g-4">
-        <CCol lg={4} xl={3} className="order-lg-1 order-2">
-          <CCard className="shadow-sm border-0 h-100">
-            <CCardHeader className="bg-dark text-white d-flex align-items-center justify-content-between">
+      <CRow>
+        <CCol xs={12}>
+          <CCard className="shadow-sm border-0">
+            <CCardHeader className="bg-primary text-white d-flex align-items-center justify-content-between">
               <span className="fw-semibold">Projects Hierarchy</span>
               <CButton color="warning" size="sm" className="text-dark fw-semibold" onClick={() => setShowAddModal(true)}>
                 <CIcon icon={cilPlus} className="me-1" /> Add Project
               </CButton>
             </CCardHeader>
-            <CCardBody style={{ maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
-              {projects.length === 0 ? (
-                <div className="small text-body-secondary">No projects yet. Start by adding one.</div>
-              ) : (
-                <div className="d-flex flex-column gap-3">
-                  {projects.map((project) => (
-                    <div
-                      key={project.id}
-                      className={`p-3 rounded-3 border ${
-                        activeProjectId === project.id
-                          ? 'border-warning bg-warning-subtle'
-                          : 'border-secondary-subtle'
-                      }`}
-                    >
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                          <div className="fw-semibold">{project.name}</div>
-                          <div className="text-body-secondary small">{project.code}</div>
-                          <div className="text-body-secondary small">System: {project.system || '—'}</div>
-                        </div>
-                        <CBadge color="warning" className="text-dark fw-semibold">
-                          {project.status}
-                        </CBadge>
-                      </div>
-                      <CListGroup flush className="mb-3">
-                        {projectSections.map((section) => (
-                          <CListGroupItem
-                            key={`${project.id}-${section.key}`}
-                            action
-                            active={activeProject?.id === project.id}
-                            onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
-                            className="d-flex align-items-center gap-2"
-                          >
-                            <CIcon icon={section.icon} className="text-warning" /> {section.label}
-                          </CListGroupItem>
-                        ))}
-                      </CListGroup>
-                      <div className="fw-semibold small mb-2">Tree</div>
-                      <ul className="list-unstyled mb-0">
-                        {renderNode(
-                          {
-                            id: project.id,
-                            label: `${project.name} (${project.code})`,
-                            children: baseTree,
-                          },
-                          0,
-                          `${project.id}-`,
-                        )}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CCardBody>
-          </CCard>
-        </CCol>
-
-        <CCol lg={8} xl={9} className="order-lg-2 order-1">
-          <CCard className="shadow-sm border-0">
-            <CCardHeader className="bg-primary text-white fw-semibold">Projects</CCardHeader>
             <CCardBody className="p-0">
-              <CTable hover responsive className="mb-0">
-                <CTableHead className="bg-body-secondary">
+              <CTable hover responsive className="mb-0 align-middle">
+                <CTableHead className="bg-body-secondary text-uppercase">
                   <CTableRow>
-                    <CTableHeaderCell scope="col">Code</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Name</CTableHeaderCell>
+                    <CTableHeaderCell scope="col" style={{ width: '64px' }}></CTableHeaderCell>
+                    <CTableHeaderCell scope="col">Code*</CTableHeaderCell>
+                    <CTableHeaderCell scope="col">Name*</CTableHeaderCell>
                     <CTableHeaderCell scope="col">Description</CTableHeaderCell>
                     <CTableHeaderCell scope="col">System</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">Status</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
+                  <CTableRow role="button" onClick={() => setShowAddModal(true)} className="bg-light">
+                    <CTableDataCell colSpan={5} className="fw-semibold text-primary">
+                      Please click here to add new row...
+                    </CTableDataCell>
+                  </CTableRow>
                   {projects.length === 0 ? (
                     <CTableRow>
                       <CTableDataCell colSpan={5} className="text-center text-body-secondary py-4">
@@ -283,17 +155,13 @@ const ProductionTreeView = () => {
                         role="button"
                         onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
                       >
+                        <CTableDataCell className="text-body-secondary">▸</CTableDataCell>
                         <CTableDataCell className="fw-semibold">{project.code}</CTableDataCell>
                         <CTableDataCell>{project.name}</CTableDataCell>
-                        <CTableDataCell className="text-wrap" style={{ maxWidth: '420px' }}>
-                          {project.description}
+                        <CTableDataCell className="text-wrap" style={{ maxWidth: '640px' }}>
+                          {project.description || '—'}
                         </CTableDataCell>
                         <CTableDataCell>{project.system || '—'}</CTableDataCell>
-                        <CTableDataCell>
-                          <CBadge color="warning" className="text-dark fw-semibold">
-                            {project.status}
-                          </CBadge>
-                        </CTableDataCell>
                       </CTableRow>
                     ))
                   )}
