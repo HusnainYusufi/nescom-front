@@ -65,3 +65,51 @@ body {
     --cui-footer-bg: var(--cui-body-bg);
   }
 }
+
+.app-sidebar {
+  --cui-sidebar-width: 16rem;
+  --cui-sidebar-width-narrow: 4rem;
+
+  .sidebar-nav {
+    padding-inline: 1rem;
+  }
+
+  .app-sidebar__nav {
+    max-height: calc(100vh - 8rem);
+  }
+
+  .app-sidebar__card {
+    border-radius: 0.75rem;
+  }
+
+  .app-sidebar__card-body {
+    padding: 0.75rem 0.875rem;
+  }
+
+  .app-sidebar__actions {
+    flex-wrap: wrap;
+  }
+
+  .app-sidebar__project-button {
+    font-size: 0.9rem;
+    padding: 0.625rem 0.75rem;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .app-sidebar__project-meta {
+    line-height: 1.4;
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .app-sidebar {
+    --cui-sidebar-width: 100vw;
+    --cui-sidebar-width-narrow: 100vw;
+
+    .app-sidebar__nav {
+      max-height: none;
+    }
+  }
+}
