@@ -23,6 +23,9 @@ const SkuBundles = React.lazy(() => import('./views/pages/skuBundles/SkuBundles'
 const ProductionTreeView = React.lazy(() => import('./views/dashboard/ProductionTreeView'))
 const FinancialTreeView = React.lazy(() => import('./views/dashboard/FinancialTreeView'))
 const ProductionHome = React.lazy(() => import('./views/pages/production/ProductionHome'))
+const ConfigurationParts = React.lazy(
+  () => import('./views/pages/production/ConfigurationParts'),
+)
 
 // Production module pages
 const CreateProject = React.lazy(() => import('./views/pages/production/CreateProject'))
@@ -66,6 +69,11 @@ const routes = [
   { path: '/production', name: 'Production', element: ProductionHome },
   { path: '/production/treeview', name: 'Production Tree View', element: ProductionTreeView },
   { path: '/financial/treeview', name: 'Financial Tree View', element: FinancialTreeView },
+  {
+    path: '/production/configuration-parts',
+    name: 'Configuration Parts',
+    element: ConfigurationParts,
+  },
 
   // Other pages
   { path: '/warehouses', name: 'Warehouses', element: Warehouses },
