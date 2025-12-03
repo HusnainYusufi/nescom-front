@@ -27,7 +27,7 @@ import {
   CTableRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilArrowCircleRight, cilPlus, cilPaperclip } from '@coreui/icons'
+import { cilArrowCircleRight, cilCloudUpload, cilPaperclip, cilPlus } from '@coreui/icons'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -221,6 +221,16 @@ const QualificationTestsOnParts = () => {
   const togglePart = (partId) => {
     setExpandedParts((prev) => ({ ...prev, [partId]: !prev[partId] }))
     setSelectedPartId(partId)
+  }
+
+  const handleUploadDocument = (setId, partId, testId, event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    handleAttachDocument(setId, partId, testId, file.name)
+
+    // Reset the input so the same file can be selected again if needed
+    event.target.value = ''
   }
 
   const handleAttachDocument = (setId, partId, testId, document) => {
@@ -462,21 +472,50 @@ const QualificationTestsOnParts = () => {
                                     <CTableRow key={test.id}>
                                       <CTableDataCell>{test.name}</CTableDataCell>
                                       <CTableDataCell>
-                                        <CButton
-                                          color="link"
-                                          className="p-0"
-                                          onClick={() =>
-                                            handleAttachDocument(
-                                              availableSets.find((set) => set.parts.includes(part))?.id || '',
-                                              part.id,
-                                              test.id,
-                                              test.document || `QC_Attachment_${test.id}.pdf`,
-                                            )
-                                          }
-                                        >
-                                          <CIcon icon={cilPaperclip} className="me-2" />
-                                          {test.document ? test.document : 'Attach Doc'}
-                                        </CButton>
+                                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                                          <CButton
+                                            color="link"
+                                            className="p-0"
+                                            onClick={() =>
+                                              handleAttachDocument(
+                                                availableSets.find((set) => set.parts.includes(part))?.id || '',
+                                                part.id,
+                                                test.id,
+                                                test.document || `QC_Attachment_${test.id}.pdf`,
+                                              )
+                                            }
+                                          >
+                                            <CIcon icon={cilPaperclip} className="me-2" />
+                                            {test.document ? test.document : 'Attach Doc'}
+                                          </CButton>
+                                          <div>
+                                            <CFormInput
+                                              type="file"
+                                              accept=".pdf,.doc,.docx,.xlsx,.xls,.csv,.txt,image/*"
+                                              id={`upload-${part.id}-${test.id}`}
+                                              className="d-none"
+                                              onChange={(e) =>
+                                                handleUploadDocument(
+                                                  availableSets.find((set) => set.parts.includes(part))?.id || '',
+                                                  part.id,
+                                                  test.id,
+                                                  e,
+                                                )
+                                              }
+                                            />
+                                            <CButton
+                                              color="secondary"
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() =>
+                                                document.getElementById(`upload-${part.id}-${test.id}`)?.click()
+                                              }
+                                            >
+                                              <CIcon icon={cilCloudUpload} className="me-2" />
+                                              Upload Report
+                                            </CButton>
+                                          </div>
+                                        </div>
                                       </CTableDataCell>
                                       <CTableDataCell>{test.order}</CTableDataCell>
                                       <CTableDataCell>{test.qcWeight}</CTableDataCell>
