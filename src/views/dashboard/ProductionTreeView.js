@@ -123,6 +123,7 @@ const ProductionTreeView = () => {
     {
       title: 'Qualification Tests on Parts',
       description: "Contains Qualification C's Tests Details.",
+      route: '/production/qualification-tests',
     },
     {
       title: 'Phase and Activities Applies on a Part',

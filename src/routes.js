@@ -29,6 +29,9 @@ const ConfigurationParts = React.lazy(
 const BuildConfiguration = React.lazy(
   () => import('./views/pages/production/BuildConfiguration'),
 )
+const QualificationTestsOnParts = React.lazy(
+  () => import('./views/pages/production/QualificationTestsOnParts'),
+)
 
 // Production module pages
 const CreateProject = React.lazy(() => import('./views/pages/production/CreateProject'))
@@ -81,6 +84,11 @@ const routes = [
     path: '/production/build-configuration',
     name: 'Build Configuration',
     element: BuildConfiguration,
+  },
+  {
+    path: '/production/qualification-tests',
+    name: 'Qualification Tests on Parts',
+    element: QualificationTestsOnParts,
   },
 
   // Other pages
