@@ -14,6 +14,7 @@ import {
   CFormSelect,
   CListGroup,
   CListGroupItem,
+  CModal,
   CNav,
   CNavItem,
   CNavLink,
