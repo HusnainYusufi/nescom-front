@@ -42,6 +42,12 @@ const _nav = [
         to: '/production/treeview',
         icon: <CIcon icon={cilSettings} customClassName="nav-icon" />,
       },
+      {
+        component: CNavItem,
+        name: 'Qualification Tests',
+        to: '/production/qualification-tests',
+        icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
+      },
     ],
   },
 ]
