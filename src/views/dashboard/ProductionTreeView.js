@@ -109,6 +109,7 @@ const ProductionTreeView = () => {
       title: 'Build Configuration',
       description:
         'This Build Configuration form allows Add, Delete, Replace and View parts under configuration.',
+      route: '/production/build-configuration',
     },
     {
       title: 'Copy Configuration',
