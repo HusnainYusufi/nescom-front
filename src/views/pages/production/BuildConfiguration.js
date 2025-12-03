@@ -19,7 +19,7 @@ import {
   CTableRow,
 } from '@coreui/react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const buildConfigurations = {
   'proj-001': {
@@ -205,6 +205,7 @@ const navigationTabs = [
 
 const BuildConfiguration = () => {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const projects = useSelector((state) => state.projects)
   const activeProjectId = useSelector((state) => state.activeProjectId)
@@ -267,6 +268,18 @@ const BuildConfiguration = () => {
     return findFirstLeaf(currentTree)
   }, [currentTree])
 
+  const handleTabNavigation = (tab) => {
+    if (tab === 'Configuration') return
+
+    const params = new URLSearchParams()
+    params.set('section', tab.toLowerCase())
+
+    const projectId = selectedProjectId || activeProjectId || projects[0]?.id
+    if (projectId) params.set('project', projectId)
+
+    navigate({ pathname: '/production/treeview', search: params.toString() })
+  }
+
   return (
     <CContainer fluid className="py-4">
       <CRow className="align-items-center mb-3">
@@ -295,7 +308,10 @@ const BuildConfiguration = () => {
       <CNav variant="tabs" className="mb-3">
         {navigationTabs.map((tab) => (
           <CNavItem key={tab}>
-            <CNavLink active={tab === 'Configuration'} disabled={tab !== 'Configuration'}>
+            <CNavLink
+              active={tab === 'Configuration'}
+              onClick={() => handleTabNavigation(tab)}
+            >
               {tab}
             </CNavLink>
           </CNavItem>
