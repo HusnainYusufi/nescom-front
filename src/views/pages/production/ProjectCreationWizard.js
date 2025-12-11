@@ -1,5 +1,5 @@
 // src/views/pages/production/ProjectCreationWizard.js
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -24,6 +24,24 @@ const ProjectCreationWizard = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const existingProjects = useSelector((state) => state.projects)
+
+  const assemblyLibrary = useMemo(() => {
+    const collected = []
+    existingProjects.forEach((project) => {
+      ;(project.sets || []).forEach((set) => {
+        ;(set.assemblies || []).forEach((assembly, idx) => {
+          collected.push({
+            id: `${project.id}-${set.id}-${idx}`,
+            name: assembly,
+            type: 'Assembly',
+            description: 'Imported from existing project',
+            source: `${project.name} / ${set.name}`,
+          })
+        })
+      })
+    })
+    return collected
+  }, [existingProjects])
 
   const steps = useMemo(
     () => [
@@ -50,9 +68,19 @@ const ProjectCreationWizard = () => {
       name: 'Set 1',
       description: 'Default starter set',
       structures: [{ id: 'st-1', name: 'Structure 1', material: 'Composite' }],
-      assemblies: [{ id: 'as-1', name: 'Assembly 1', type: 'Mechanical' }],
+      assemblies: [
+        {
+          id: 'as-1',
+          name: 'Assembly 1',
+          type: 'Assembly',
+          description: 'Baseline assembly for this set',
+          source: 'Local',
+          saved: true,
+        },
+      ],
     },
   ])
+  const [assemblyInventory, setAssemblyInventory] = useState([])
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [alert, setAlert] = useState('')
   const [errors, setErrors] = useState({})
@@ -68,6 +96,14 @@ const ProjectCreationWizard = () => {
       }),
     [currentStep, steps],
   )
+
+  useEffect(() => {
+    setAssemblyInventory((prev) => {
+      const seen = new Set(prev.map((item) => item.id))
+      const additions = assemblyLibrary.filter((item) => !seen.has(item.id))
+      return additions.length ? [...prev, ...additions] : prev
+    })
+  }, [assemblyLibrary])
 
   const updateSetField = (setId, field, value) => {
     setSets((prev) => prev.map((set) => (set.id === setId ? { ...set, [field]: value } : set)))
@@ -95,7 +131,11 @@ const ProjectCreationWizard = () => {
               ...set,
               structures: [
                 ...set.structures,
-                { id: `st-${Date.now()}`, name: `Structure ${set.structures.length + 1}`, material: '' },
+                {
+                  id: `st-${Date.now()}`,
+                  name: `Structure ${set.structures.length + 1}`,
+                  material: '',
+                },
               ],
             }
           : set,
@@ -111,12 +151,92 @@ const ProjectCreationWizard = () => {
               ...set,
               assemblies: [
                 ...set.assemblies,
-                { id: `as-${Date.now()}`, name: `Assembly ${set.assemblies.length + 1}`, type: '' },
+                {
+                  id: `as-${Date.now()}`,
+                  name: `Assembly ${set.assemblies.length + 1}`,
+                  type: 'Assembly',
+                  description: '',
+                  source: 'Local',
+                  saved: false,
+                },
               ],
             }
           : set,
       ),
     )
+  }
+
+  const updateStructureField = (setId, structureId, field, value) => {
+    setSets((prev) =>
+      prev.map((set) =>
+        set.id === setId
+          ? {
+              ...set,
+              structures: set.structures.map((structure) =>
+                structure.id === structureId ? { ...structure, [field]: value } : structure,
+              ),
+            }
+          : set,
+      ),
+    )
+  }
+
+  const updateAssemblyField = (setId, assemblyId, field, value) => {
+    setSets((prev) =>
+      prev.map((set) =>
+        set.id === setId
+          ? {
+              ...set,
+              assemblies: set.assemblies.map((assembly) =>
+                assembly.id === assemblyId ? { ...assembly, [field]: value } : assembly,
+              ),
+            }
+          : set,
+      ),
+    )
+  }
+
+  const addAssemblyFromInventory = (setId, inventoryId) => {
+    const template = assemblyInventory.find((item) => item.id === inventoryId)
+    if (!template) return
+
+    setSets((prev) =>
+      prev.map((set) =>
+        set.id === setId
+          ? {
+              ...set,
+              assemblies: [
+                ...set.assemblies,
+                {
+                  id: `as-${Date.now()}`,
+                  name: template.name,
+                  type: template.type || 'Assembly',
+                  description: template.description || '',
+                  source: template.source || 'Inventory',
+                  saved: true,
+                },
+              ],
+            }
+          : set,
+      ),
+    )
+  }
+
+  const saveAssemblyToInventory = (assembly) => {
+    if (!assembly.name) return
+    const exists = assemblyInventory.some(
+      (item) => item.name.toLowerCase() === assembly.name.toLowerCase(),
+    )
+    if (exists) return
+
+    const newInventoryItem = {
+      id: `inventory-${Date.now()}`,
+      name: assembly.name,
+      type: assembly.type || 'Assembly',
+      description: assembly.description || 'Saved from project wizard',
+      source: 'Wizard inventory',
+    }
+    setAssemblyInventory((prev) => [...prev, newInventoryItem])
   }
 
   const importSets = () => {
@@ -342,74 +462,174 @@ const ProjectCreationWizard = () => {
 
   const renderStructures = () => (
     <CRow className="g-3">
-      {sets.map((set) => (
-        <CCol md={6} key={set.id}>
-          <CCard className="h-100 shadow-sm">
-            <CCardHeader className="d-flex justify-content-between align-items-center">
-              <div>
-                <h6 className="mb-1">{set.name}</h6>
-                <p className="small text-body-secondary mb-0">Capture structures and assemblies for this set.</p>
-              </div>
-              <CBadge color="primary">Step 3</CBadge>
-            </CCardHeader>
-            <CCardBody>
-              <h6 className="text-body-secondary">Structures</h6>
-              {set.structures.map((structure) => (
-                <CFormInput
-                  key={structure.id}
-                  value={structure.name}
-                  placeholder="Structure name"
-                  className="mb-2"
-                  onChange={(event) =>
-                    setSets((prev) =>
-                      prev.map((currentSet) =>
-                        currentSet.id === set.id
-                          ? {
-                              ...currentSet,
-                              structures: currentSet.structures.map((st) =>
-                                st.id === structure.id ? { ...st, name: event.target.value } : st,
-                              ),
-                            }
-                          : currentSet,
-                      ),
-                    )
-                  }
-                />
-              ))}
-              <CButton color="secondary" size="sm" variant="outline" className="mb-3" onClick={() => addStructure(set.id)}>
-                Add structure
-              </CButton>
+      {sets.map((set) => {
+        const existingAssemblyNames = assemblyInventory.map((item) => item.name.toLowerCase())
+        return (
+          <CCol xs={12} key={set.id}>
+            <CCard className="shadow-sm composition-card">
+              <CCardHeader className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <h6 className="mb-1">{set.name}</h6>
+                  <p className="small text-body-secondary mb-0">
+                    Capture structures and assemblies for this set. Pull from inventory or create new ones on the fly.
+                  </p>
+                </div>
+                <CBadge color="primary">Step 3</CBadge>
+              </CCardHeader>
+              <CCardBody>
+                <CRow className="g-4">
+                  <CCol md={6}>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <h6 className="text-body-secondary mb-0">Structures</h6>
+                      <CButton color="secondary" size="sm" variant="outline" onClick={() => addStructure(set.id)}>
+                        Add structure
+                      </CButton>
+                    </div>
+                    <CRow className="g-2">
+                      {set.structures.map((structure) => (
+                        <CCol md={12} key={structure.id}>
+                          <div className="p-3 border rounded-3 bg-body-tertiary h-100">
+                            <CFormInput
+                              label="Structure name"
+                              value={structure.name}
+                              placeholder="e.g., Control frame"
+                              className="mb-2"
+                              onChange={(event) =>
+                                updateStructureField(set.id, structure.id, 'name', event.target.value)
+                              }
+                            />
+                            <CFormInput
+                              label="Material / spec"
+                              value={structure.material}
+                              placeholder="Composite, metallic, etc."
+                              onChange={(event) =>
+                                updateStructureField(set.id, structure.id, 'material', event.target.value)
+                              }
+                            />
+                          </div>
+                        </CCol>
+                      ))}
+                      {set.structures.length === 0 && (
+                        <CCol>
+                          <CAlert color="light" className="text-center mb-0">
+                            No structures yet. Add a structure to describe the core build items.
+                          </CAlert>
+                        </CCol>
+                      )}
+                    </CRow>
+                  </CCol>
 
-              <h6 className="text-body-secondary mt-3">Assemblies</h6>
-              {set.assemblies.map((assembly) => (
-                <CFormInput
-                  key={assembly.id}
-                  value={assembly.name}
-                  placeholder="Assembly name"
-                  className="mb-2"
-                  onChange={(event) =>
-                    setSets((prev) =>
-                      prev.map((currentSet) =>
-                        currentSet.id === set.id
-                          ? {
-                              ...currentSet,
-                              assemblies: currentSet.assemblies.map((as) =>
-                                as.id === assembly.id ? { ...as, name: event.target.value } : as,
-                              ),
-                            }
-                          : currentSet,
-                      ),
-                    )
-                  }
-                />
-              ))}
-              <CButton color="secondary" size="sm" variant="outline" onClick={() => addAssembly(set.id)}>
-                Add assembly
-              </CButton>
-            </CCardBody>
-          </CCard>
-        </CCol>
-      ))}
+                  <CCol md={6}>
+                    <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                      <div>
+                        <h6 className="text-body-secondary mb-0">Assemblies</h6>
+                        <small className="text-body-secondary">Reuse from inventory or create new.</small>
+                      </div>
+                      <CButton color="secondary" size="sm" variant="outline" onClick={() => addAssembly(set.id)}>
+                        Add new assembly
+                      </CButton>
+                    </div>
+
+                    <CFormSelect
+                      size="sm"
+                      className="mb-3"
+                      value=""
+                      onChange={(event) => addAssemblyFromInventory(set.id, event.target.value)}
+                    >
+                      <option value="">Pull an assembly from inventory</option>
+                      {assemblyInventory.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} — {item.source}
+                        </option>
+                      ))}
+                    </CFormSelect>
+
+                    <CRow className="g-3">
+                      {set.assemblies.map((assembly) => {
+                        const alreadySaved = existingAssemblyNames.includes(assembly.name?.toLowerCase())
+                        return (
+                          <CCol md={12} key={assembly.id}>
+                            <div className="p-3 border rounded-3 bg-body h-100 shadow-sm">
+                              <div className="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                  <h6 className="mb-0">{assembly.name || 'New assembly'}</h6>
+                                  <small className="text-body-secondary">{assembly.source || 'Local'}</small>
+                                </div>
+                                <CBadge color={assembly.saved || alreadySaved ? 'success' : 'secondary'}>
+                                  {assembly.saved || alreadySaved ? 'In inventory' : 'Draft'}
+                                </CBadge>
+                              </div>
+
+                              <CRow className="g-2 mb-2">
+                                <CCol md={8}>
+                                  <CFormInput
+                                    label="Assembly name"
+                                    value={assembly.name}
+                                    placeholder="e.g., Avionics rack"
+                                    onChange={(event) =>
+                                      updateAssemblyField(set.id, assembly.id, 'name', event.target.value)
+                                    }
+                                  />
+                                </CCol>
+                                <CCol md={4}>
+                                  <CFormSelect
+                                    label="Type"
+                                    value={assembly.type}
+                                    onChange={(event) =>
+                                      updateAssemblyField(set.id, assembly.id, 'type', event.target.value)
+                                    }
+                                  >
+                                    <option value="Assembly">Assembly</option>
+                                    <option value="Sub-assembly">Sub-assembly</option>
+                                    <option value="Kit">Kit</option>
+                                  </CFormSelect>
+                                </CCol>
+                                <CCol md={12}>
+                                  <CFormTextarea
+                                    label="Notes / parts"
+                                    value={assembly.description || ''}
+                                    placeholder="List key parts or notes for procurement"
+                                    rows={2}
+                                    onChange={(event) =>
+                                      updateAssemblyField(set.id, assembly.id, 'description', event.target.value)
+                                    }
+                                  />
+                                </CCol>
+                              </CRow>
+
+                              <div className="d-flex justify-content-between align-items-center">
+                                <small className="text-body-secondary">Save frequently used assemblies to reuse later.</small>
+                                <CButton
+                                  color="success"
+                                  size="sm"
+                                  disabled={!assembly.name || alreadySaved}
+                                  onClick={() => {
+                                    saveAssemblyToInventory(assembly)
+                                    updateAssemblyField(set.id, assembly.id, 'saved', true)
+                                  }}
+                                >
+                                  {alreadySaved ? 'Already in inventory' : 'Save to inventory'}
+                                </CButton>
+                              </div>
+                            </div>
+                          </CCol>
+                        )
+                      })}
+                      {set.assemblies.length === 0 && (
+                        <CCol>
+                          <CAlert color="light" className="text-center mb-0">
+                            No assemblies yet. Select from inventory or add a new one to get started.
+                          </CAlert>
+                        </CCol>
+                      )}
+                    </CRow>
+                  </CCol>
+                </CRow>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        )
+      })}
     </CRow>
   )
 
@@ -611,6 +831,15 @@ const ProjectCreationWizard = () => {
           }
           .wizard-step--upcoming {
             opacity: 0.8;
+          }
+          .composition-card {
+            border: 1px solid var(--cui-border-color);
+          }
+          .composition-card .bg-body-tertiary {
+            background: var(--cui-tertiary-bg) !important;
+          }
+          .composition-card .bg-body {
+            background: var(--cui-body-bg) !important;
           }
           @media (max-width: 767.98px) {
             .wizard-step {
