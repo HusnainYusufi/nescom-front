@@ -18,18 +18,63 @@ const initialState = {
       system: 'Guidance & Control',
       projectType: 'Conventional',
       category: 'Ballistic',
+      qcReports: [
+        {
+          id: 'qc-001',
+          title: 'Composite layup witness report',
+          owner: 'QA Lead',
+          status: 'Accepted',
+          date: '2025-03-01',
+        },
+      ],
       sets: [
         {
           id: 'set-1',
           name: 'Airframe Set',
-          structures: ['Center fuselage', 'Wing spars'],
-          assemblies: ['Actuator cluster', 'Telemetry harness'],
+          status: 'In Production',
+          structures: [
+            {
+              name: 'Center fuselage',
+              status: 'In Production',
+              assemblies: [
+                { name: 'Actuator cluster', status: 'In Production' },
+                { name: 'Telemetry harness', status: 'In Configuration' },
+              ],
+            },
+            {
+              name: 'Wing spars',
+              status: 'In Configuration',
+              assemblies: [
+                { name: 'Spar caps', status: 'Pending QC' },
+                { name: 'Root fittings', status: 'Draft' },
+              ],
+            },
+          ],
+          qcReports: [
+            {
+              id: 'qc-002',
+              title: 'Wing spar metallurgy check',
+              owner: 'Metallurgy',
+              status: 'Pending',
+              date: '2025-03-05',
+            },
+          ],
         },
         {
           id: 'set-2',
           name: 'Electronics Set',
-          structures: ['Guidance bay'],
-          assemblies: ['Seeker head', 'Power regulation unit'],
+          status: 'In Configuration',
+          structures: [
+            {
+              name: 'Guidance bay',
+              status: 'Draft',
+              assemblies: [
+                { name: 'Seeker head', status: 'Draft' },
+                { name: 'Power regulation unit', status: 'Draft' },
+              ],
+            },
+          ],
+          qcReports: [],
         },
       ],
     },
@@ -43,18 +88,60 @@ const initialState = {
       system: 'ISR Platform',
       projectType: 'Special',
       category: 'Aerial',
+      qcReports: [
+        {
+          id: 'qc-003',
+          title: 'Ground vibration test pack',
+          owner: 'Flight Worthiness',
+          status: 'In Progress',
+          date: '2025-02-14',
+        },
+      ],
       sets: [
         {
           id: 'set-1',
           name: 'Propulsion Set',
-          structures: ['Pylon mounts', 'Engine cradle'],
-          assemblies: ['Propeller kit', 'Fuel feed system'],
+          status: 'In Production',
+          structures: [
+            {
+              name: 'Pylon mounts',
+              status: 'In Production',
+              assemblies: [
+                { name: 'Propeller kit', status: 'In Production' },
+                { name: 'Fuel feed system', status: 'In Review' },
+              ],
+            },
+            {
+              name: 'Engine cradle',
+              status: 'In Configuration',
+              assemblies: [{ name: 'Engine vibration dampers', status: 'In Configuration' }],
+            },
+          ],
+          qcReports: [
+            {
+              id: 'qc-004',
+              title: 'Engine cradle dye-penetrant report',
+              owner: 'QC Cell',
+              status: 'Accepted',
+              date: '2025-02-28',
+            },
+          ],
         },
         {
           id: 'set-2',
           name: 'Sensors Set',
-          structures: ['Nose compartment'],
-          assemblies: ['EO/IR turret', 'Navigation suite'],
+          status: 'In Configuration',
+          structures: [
+            {
+              name: 'Nose compartment',
+              status: 'Draft',
+              assemblies: [
+                { name: 'EO/IR turret', status: 'Draft' },
+                { name: 'Navigation suite', status: 'Draft' },
+              ],
+            },
+          ],
+          qcReports: [],
         },
       ],
     },
@@ -82,6 +169,13 @@ const changeState = (state = initialState, { type, ...rest }) => {
     }
     case 'setActiveProject':
       return { ...state, activeProjectId: rest.projectId }
+    case 'updateProject':
+      return {
+        ...state,
+        projects: state.projects.map((project) =>
+          project.id === rest.projectId ? { ...project, ...rest.changes } : project,
+        ),
+      }
     case 'updateSelection':
       return { ...state, selection: { ...state.selection, ...rest.selection } }
     default:

@@ -306,16 +306,23 @@ const ProjectCreationWizard = () => {
       category: projectForm.category,
       projectType: projectForm.projectType,
       visibility: projectForm.visibility,
+      qcReports: [],
       sets: sets.map((set) => ({
         id: set.id,
         name: set.name,
-        structures: set.structures.map((structure) => structure.name).filter(Boolean),
-        assemblies: set.assemblies.map((assembly) => assembly.name).filter(Boolean),
+        status: 'Draft',
+        structures: set.structures
+          .map((structure) => structure.name)
+          .filter(Boolean)
+          .map((name) => ({ name, status: 'Draft', assemblies: [] })),
+        assemblies: undefined,
       })),
     }
 
     dispatch({ type: 'addProject', project: newProject })
-    navigate(`/production/treeview?project=${newProject.id}`)
+    navigate(`/production/treeview?project=${newProject.id}`, {
+      state: { projectCreated: true, projectName: newProject.name },
+    })
   }
 
   const renderBasics = () => (

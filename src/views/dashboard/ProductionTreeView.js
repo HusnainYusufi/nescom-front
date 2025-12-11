@@ -7,10 +7,13 @@ import {
   CCard,
   CCardBody,
   CCardHeader,
+  CCloseButton,
   CCol,
   CContainer,
   CFormInput,
   CFormSelect,
+  CListGroup,
+  CListGroupItem,
   CModal,
   CModalBody,
   CModalFooter,
@@ -18,7 +21,12 @@ import {
   CNav,
   CNavItem,
   CNavLink,
+  CProgress,
   CRow,
+  CToast,
+  CToastBody,
+  CToaster,
+  CTooltip,
   CTable,
   CTableBody,
   CTableDataCell,
@@ -27,7 +35,7 @@ import {
   CTableRow,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { cilPlus } from '@coreui/icons'
+import { cilCheckCircle, cilInfo, cilList, cilPlus, cilWarning } from '@coreui/icons'
 
 const ProductionTreeView = () => {
   const dispatch = useDispatch()
@@ -52,7 +60,12 @@ const ProductionTreeView = () => {
   })
   const [errors, setErrors] = useState({})
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [activeSection, setActiveSection] = useState('general')
+  const [viewMode, setViewMode] = useState('table')
+  const [expandedProjects, setExpandedProjects] = useState([])
+  const [qcDrafts, setQcDrafts] = useState({})
+  const [toast, setToast] = useState({ visible: false, message: '', color: 'success' })
 
   useEffect(() => {
     dispatch({ type: 'set', activeModule: 'production' })
@@ -160,9 +173,12 @@ const ProductionTreeView = () => {
       owner: form.owner,
       system: form.system,
       description: form.description,
+      qcReports: [],
     }
 
     dispatch({ type: 'addProject', project: newProject })
+    setToast({ visible: true, message: `${newProject.name} was added successfully.`, color: 'success' })
+    setShowSuccessModal(true)
     setForm({
       name: '',
       code: '',
@@ -176,8 +192,217 @@ const ProductionTreeView = () => {
     setShowAddModal(false)
   }
 
+  const toggleProjectExpansion = (projectId) => {
+    setExpandedProjects((prev) =>
+      prev.includes(projectId) ? prev.filter((id) => id !== projectId) : [...prev, projectId],
+    )
+  }
+
+  const handleStatusChange = (projectId, status) => {
+    dispatch({ type: 'updateProject', projectId, changes: { status } })
+    setToast({ visible: true, message: 'Project status updated.', color: 'primary' })
+  }
+
+  const getNormalizedSets = (project) =>
+    (project.sets || []).map((set) => {
+      const normalizedStructures = (set.structures || []).map((structure) =>
+        typeof structure === 'string'
+          ? { name: structure, status: 'Draft', assemblies: [] }
+          : {
+              name: structure.name,
+              status: structure.status || 'Draft',
+              assemblies: (structure.assemblies || []).map((assembly) =>
+                typeof assembly === 'string'
+                  ? { name: assembly, status: 'Draft' }
+                  : { name: assembly.name, status: assembly.status || 'Draft' },
+              ),
+            },
+      )
+
+      return {
+        ...set,
+        status: set.status || 'Draft',
+        structures: normalizedStructures,
+        qcReports: set.qcReports || [],
+      }
+    })
+
+  const handleQcDraftChange = (projectId, field, value) => {
+    setQcDrafts((prev) => ({
+      ...prev,
+      [projectId]: {
+        ...prev[projectId],
+        [field]: value,
+      },
+    }))
+  }
+
+  const handleAddQcReport = (projectId) => {
+    const project = projects.find((p) => p.id === projectId)
+    const draft = qcDrafts[projectId] || {}
+    if (!project || !draft.title || !draft.owner || !draft.status) {
+      setToast({ visible: true, message: 'Add QC title, owner, and status.', color: 'warning' })
+      return
+    }
+
+    const newReport = {
+      id: `qc-${Date.now()}`,
+      title: draft.title,
+      owner: draft.owner,
+      status: draft.status,
+      date: new Date().toISOString().slice(0, 10),
+    }
+
+    dispatch({
+      type: 'updateProject',
+      projectId,
+      changes: { qcReports: [...(project.qcReports || []), newReport] },
+    })
+    setToast({ visible: true, message: 'QC report added to project.', color: 'success' })
+    setQcDrafts((prev) => ({ ...prev, [projectId]: { title: '', owner: '', status: '' } }))
+  }
+
+  useEffect(() => {
+    if (location.state?.projectCreated) {
+      const projectName = location.state.projectName || 'Project'
+      setToast({ visible: true, message: `${projectName} was created successfully.`, color: 'success' })
+      navigate({ pathname: location.pathname, search: location.search }, { replace: true })
+      setShowSuccessModal(true)
+    }
+  }, [location.pathname, location.search, location.state, navigate])
+
+  const renderQcReports = (project) => (
+    <div className="mt-3">
+      <div className="d-flex align-items-center justify-content-between mb-2">
+        <div className="d-flex align-items-center gap-2">
+          <CIcon icon={cilInfo} className="text-info" />
+          <span className="fw-semibold">QC Reports</span>
+        </div>
+        <CTooltip content="Add offline QC proof or report and keep it attached with the project.">
+          <CIcon icon={cilWarning} className="text-warning" />
+        </CTooltip>
+      </div>
+      <CRow className="g-3">
+        {(project.qcReports || []).map((report) => (
+          <CCol md={6} key={report.id}>
+            <CCard className="border-start border-4 border-success h-100">
+              <CCardBody className="py-2">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div className="fw-semibold">{report.title}</div>
+                    <div className="small text-body-secondary">
+                      Owner: {report.owner} • {report.date || 'Dated offline'}
+                    </div>
+                  </div>
+                  <span className="badge text-bg-light text-success border">{report.status}</span>
+                </div>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        ))}
+        <CCol md={12}>
+          <CCard className="bg-body-tertiary border-dashed h-100">
+            <CCardBody>
+              <CRow className="g-3">
+                <CCol md={4}>
+                  <CFormInput
+                    label="QC title"
+                    value={qcDrafts[project.id]?.title || ''}
+                    onChange={(event) => handleQcDraftChange(project.id, 'title', event.target.value)}
+                    placeholder="e.g., Assembly torque log"
+                  />
+                </CCol>
+                <CCol md={4}>
+                  <CFormInput
+                    label="Owner / Cell"
+                    value={qcDrafts[project.id]?.owner || ''}
+                    onChange={(event) => handleQcDraftChange(project.id, 'owner', event.target.value)}
+                    placeholder="QA Cell"
+                  />
+                </CCol>
+                <CCol md={3}>
+                  <CFormSelect
+                    label="Status"
+                    value={qcDrafts[project.id]?.status || ''}
+                    onChange={(event) => handleQcDraftChange(project.id, 'status', event.target.value)}
+                  >
+                    <option value="">Select status</option>
+                    <option value="Draft">Draft</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Accepted">Accepted</option>
+                  </CFormSelect>
+                </CCol>
+                <CCol md={1} className="d-flex align-items-end">
+                  <CButton color="success" variant="outline" onClick={() => handleAddQcReport(project.id)}>
+                    Save
+                  </CButton>
+                </CCol>
+              </CRow>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+    </div>
+  )
+
+  const renderSetBreakdown = (project) => {
+    const sets = getNormalizedSets(project)
+    return (
+      <CListGroup flush>
+        {sets.map((set) => (
+          <CListGroupItem key={set.id} className="border-0 px-0">
+            <div className="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <div className="fw-semibold">{set.name}</div>
+                <div className="small text-body-secondary">{set.structures.length} structures</div>
+              </div>
+              <span className="badge text-bg-secondary">{set.status}</span>
+            </div>
+            {set.structures.map((structure, idx) => (
+              <CCard className="mb-2 border-start border-4 border-primary" key={`${structure.name}-${idx}`}>
+                <CCardBody className="py-3">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div className="fw-semibold">{structure.name}</div>
+                      <div className="small text-body-secondary">Assemblies</div>
+                    </div>
+                    <span className="badge text-bg-light border">{structure.status}</span>
+                  </div>
+                  <div className="d-flex flex-wrap gap-2 mt-2">
+                    {structure.assemblies.map((assembly) => (
+                      <span key={assembly.name} className="badge text-bg-light border">
+                        {assembly.name}
+                        <small className="ms-2 text-muted">{assembly.status}</small>
+                      </span>
+                    ))}
+                    {structure.assemblies.length === 0 && (
+                      <span className="text-body-secondary small">No assemblies added yet.</span>
+                    )}
+                  </div>
+                </CCardBody>
+              </CCard>
+            ))}
+          </CListGroupItem>
+        ))}
+      </CListGroup>
+    )
+  }
+
   return (
     <CContainer fluid className="py-4">
+      <CToaster placement="top-end" className="mt-5 me-3">
+        {toast.visible && (
+          <CToast
+            autohide
+            visible
+            color={toast.color}
+            onClose={() => setToast((prev) => ({ ...prev, visible: false }))}
+          >
+            <CToastBody>{toast.message}</CToastBody>
+          </CToast>
+        )}
+      </CToaster>
       <CNav variant="tabs" className="mb-3">
         <CNavItem>
           <CNavLink active={activeSection === 'general'} onClick={() => handleSectionChange('general')}>
@@ -225,64 +450,220 @@ const ProductionTreeView = () => {
             <CCard className="shadow-sm border-0">
               <CCardHeader className="bg-primary text-white d-flex align-items-center justify-content-between">
                 <span className="fw-semibold">Projects Hierarchy</span>
-                <CButton
-                  color="warning"
-                  size="sm"
-                  className="text-dark fw-semibold"
-                  onClick={() => setShowAddModal(true)}
-                >
-                  <CIcon icon={cilPlus} className="me-1" /> Add Project
-                </CButton>
+                <div className="d-flex align-items-center gap-2">
+                  <CButton
+                    color="light"
+                    size="sm"
+                    className={viewMode === 'table' ? 'border-primary text-primary' : ''}
+                    onClick={() => setViewMode('table')}
+                  >
+                    <CIcon icon={cilList} className="me-1" /> Table
+                  </CButton>
+                  <CButton
+                    color="light"
+                    size="sm"
+                    className={viewMode === 'card' ? 'border-primary text-primary' : ''}
+                    onClick={() => setViewMode('card')}
+                  >
+                    <CIcon icon={cilInfo} className="me-1" /> Cards
+                  </CButton>
+                  <CButton
+                    color="warning"
+                    size="sm"
+                    className="text-dark fw-semibold"
+                    onClick={() => setShowAddModal(true)}
+                  >
+                    <CIcon icon={cilPlus} className="me-1" /> Add Project
+                  </CButton>
+                </div>
               </CCardHeader>
               <CCardBody className="p-0">
-                <CTable hover responsive className="mb-0 align-middle">
-                  <CTableHead className="bg-body-secondary text-uppercase">
-                    <CTableRow>
-                      <CTableHeaderCell scope="col" style={{ width: '64px' }}></CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Code*</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Name*</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Type</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Category</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">Description</CTableHeaderCell>
-                      <CTableHeaderCell scope="col">System</CTableHeaderCell>
-                    </CTableRow>
-                  </CTableHead>
-                  <CTableBody>
-                    <CTableRow role="button" onClick={() => setShowAddModal(true)} className="bg-light">
-                      <CTableDataCell colSpan={7} className="fw-semibold text-primary">
-                        Please click here to add new row...
-                      </CTableDataCell>
-                    </CTableRow>
-                    {projects.length === 0 ? (
+                {viewMode === 'table' ? (
+                  <CTable hover responsive className="mb-0 align-middle">
+                    <CTableHead className="bg-body-secondary text-uppercase">
                       <CTableRow>
-                        <CTableDataCell colSpan={7} className="text-center text-body-secondary py-4">
-                          No projects available. Use the Add Project button to create one.
+                        <CTableHeaderCell scope="col" style={{ width: '64px' }}></CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Code*</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Name*</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Type</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Category</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Description</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">System</CTableHeaderCell>
+                        <CTableHeaderCell scope="col">Status</CTableHeaderCell>
+                      </CTableRow>
+                    </CTableHead>
+                    <CTableBody>
+                      <CTableRow role="button" onClick={() => setShowAddModal(true)} className="bg-light">
+                        <CTableDataCell colSpan={8} className="fw-semibold text-primary">
+                          Please click here to add new row...
                         </CTableDataCell>
                       </CTableRow>
-                    ) : (
-                      projects.map((project) => (
-                        <CTableRow
-                          key={project.id}
-                          active={activeProjectId === project.id}
-                          role="button"
-                          onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
-                        >
-                          <CTableDataCell className="text-body-secondary">▸</CTableDataCell>
-                          <CTableDataCell className="fw-semibold">{project.code}</CTableDataCell>
-                          <CTableDataCell>{project.name}</CTableDataCell>
-                          <CTableDataCell className="text-capitalize">
-                            {project.projectType || '—'}
+                      {projects.length === 0 ? (
+                        <CTableRow>
+                          <CTableDataCell colSpan={8} className="text-center text-body-secondary py-4">
+                            No projects available. Use the Add Project button to create one.
                           </CTableDataCell>
-                          <CTableDataCell>{project.category || '—'}</CTableDataCell>
-                          <CTableDataCell className="text-wrap" style={{ maxWidth: '640px' }}>
-                            {project.description || '—'}
-                          </CTableDataCell>
-                          <CTableDataCell>{project.system || '—'}</CTableDataCell>
                         </CTableRow>
-                      ))
-                    )}
-                  </CTableBody>
-                </CTable>
+                      ) : (
+                        projects.map((project) => (
+                          <React.Fragment key={project.id}>
+                            <CTableRow
+                              active={activeProjectId === project.id}
+                              role="button"
+                              onClick={() => dispatch({ type: 'setActiveProject', projectId: project.id })}
+                            >
+                              <CTableDataCell
+                                className="text-body-secondary"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  toggleProjectExpansion(project.id)
+                                }}
+                              >
+                                {expandedProjects.includes(project.id) ? '▾' : '▸'}
+                              </CTableDataCell>
+                              <CTableDataCell className="fw-semibold">{project.code}</CTableDataCell>
+                              <CTableDataCell>{project.name}</CTableDataCell>
+                              <CTableDataCell className="text-capitalize">
+                                {project.projectType || '—'}
+                              </CTableDataCell>
+                              <CTableDataCell>{project.category || '—'}</CTableDataCell>
+                              <CTableDataCell className="text-wrap" style={{ maxWidth: '320px' }}>
+                                {project.description || '—'}
+                              </CTableDataCell>
+                              <CTableDataCell>{project.system || '—'}</CTableDataCell>
+                              <CTableDataCell>
+                                <CFormSelect
+                                  size="sm"
+                                  value={project.status}
+                                  onChange={(event) => handleStatusChange(project.id, event.target.value)}
+                                >
+                                  <option>Draft</option>
+                                  <option>In Configuration</option>
+                                  <option>In Production</option>
+                                  <option>Complete</option>
+                                </CFormSelect>
+                              </CTableDataCell>
+                            </CTableRow>
+                            {expandedProjects.includes(project.id) && (
+                              <CTableRow className="bg-body-tertiary">
+                                <CTableDataCell colSpan={8}>
+                                  <CRow className="g-3">
+                                    <CCol md={4}>
+                                      <CCard className="border-0 shadow-sm h-100">
+                                        <CCardHeader className="fw-semibold bg-body-secondary">Project at a glance</CCardHeader>
+                                        <CCardBody>
+                                          <div className="d-flex align-items-center gap-2 mb-2">
+                                            <CIcon icon={cilCheckCircle} className="text-success" />
+                                            <span className="small text-body-secondary">Owner</span>
+                                            <span className="fw-semibold">{project.owner || 'Unassigned'}</span>
+                                          </div>
+                                          <div className="d-flex align-items-center gap-2 mb-2">
+                                            <CIcon icon={cilInfo} className="text-primary" />
+                                            <span className="small text-body-secondary">System</span>
+                                            <span className="fw-semibold">{project.system || '—'}</span>
+                                          </div>
+                                          <CProgress color="warning" value={project.status === 'Complete' ? 100 : 55} />
+                                          <div className="small text-body-secondary mt-2">
+                                            Status drive is fully offline; keep updating locally during production.
+                                          </div>
+                                        </CCardBody>
+                                      </CCard>
+                                    </CCol>
+                                    <CCol md={5}>
+                                      <CCard className="border-0 shadow-sm h-100">
+                                        <CCardHeader className="fw-semibold bg-body-secondary">Sets, structures & assemblies</CCardHeader>
+                                        <CCardBody>{renderSetBreakdown(project)}</CCardBody>
+                                      </CCard>
+                                    </CCol>
+                                    <CCol md={3}>
+                                      <CCard className="border-0 shadow-sm h-100">
+                                        <CCardHeader className="fw-semibold bg-body-secondary">Quick status</CCardHeader>
+                                        <CCardBody>
+                                          <div className="small text-body-secondary mb-2">
+                                            Mark production readiness per set.
+                                          </div>
+                                          {getNormalizedSets(project).map((set) => (
+                                            <div className="d-flex align-items-center justify-content-between mb-2" key={set.id}>
+                                              <span className="fw-semibold">{set.name}</span>
+                                              <span className="badge text-bg-light border">{set.status}</span>
+                                            </div>
+                                          ))}
+                                          <div className="small text-body-secondary">
+                                            Use QC space to attach reports for every structure and assembly.
+                                          </div>
+                                        </CCardBody>
+                                      </CCard>
+                                    </CCol>
+                                  </CRow>
+                                  {renderQcReports(project)}
+                                </CTableDataCell>
+                              </CTableRow>
+                            )}
+                          </React.Fragment>
+                        ))
+                      )}
+                    </CTableBody>
+                  </CTable>
+                ) : (
+                  <CRow className="g-3 p-3">
+                    {projects.map((project) => (
+                      <CCol xl={4} lg={6} key={project.id}>
+                        <CCard className="h-100 shadow-sm border-0">
+                          <CCardHeader className="bg-body-secondary d-flex justify-content-between align-items-center">
+                            <div>
+                              <div className="fw-semibold">{project.name}</div>
+                              <div className="small text-body-secondary">{project.code}</div>
+                            </div>
+                            <span className="badge text-bg-light border">{project.status}</span>
+                          </CCardHeader>
+                          <CCardBody>
+                            <div className="small text-body-secondary mb-2">{project.description || '—'}</div>
+                            <div className="d-flex flex-wrap gap-2 mb-3">
+                              <span className="badge text-bg-info text-white">{project.projectType}</span>
+                              <span className="badge text-bg-warning text-dark">{project.category}</span>
+                              <span className="badge text-bg-light border">Owner: {project.owner || '—'}</span>
+                            </div>
+                            <div className="mb-3">
+                              <div className="fw-semibold mb-2">Sets snapshot</div>
+                              <div className="d-flex flex-wrap gap-2">
+                                {getNormalizedSets(project).map((set) => (
+                                  <span className="badge text-bg-light border" key={set.id}>
+                                    {set.name}
+                                    <small className="ms-2 text-muted">{set.structures.length} structures</small>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="mb-3">
+                              <div className="fw-semibold mb-2">Latest QC</div>
+                              {(project.qcReports || []).slice(0, 2).map((report) => (
+                                <div className="d-flex align-items-center justify-content-between mb-1" key={report.id}>
+                                  <span className="small">{report.title}</span>
+                                  <span className="badge text-bg-light border">{report.status}</span>
+                                </div>
+                              ))}
+                              {(project.qcReports || []).length === 0 && (
+                                <div className="small text-body-secondary">No QC reports added yet.</div>
+                              )}
+                            </div>
+                            <CButton
+                              color="primary"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setExpandedProjects((prev) => [...prev, project.id])
+                                setViewMode('table')
+                                dispatch({ type: 'setActiveProject', projectId: project.id })
+                              }}
+                            >
+                              Open in table
+                            </CButton>
+                          </CCardBody>
+                        </CCard>
+                      </CCol>
+                    ))}
+                  </CRow>
+                )}
               </CCardBody>
             </CCard>
           </CCol>
@@ -331,6 +712,31 @@ const ProductionTreeView = () => {
           </CCol>
         </CRow>
       )}
+
+      <CModal alignment="center" visible={showSuccessModal} onClose={() => setShowSuccessModal(false)}>
+        <CModalHeader className="fw-semibold">
+          Project added
+          <CCloseButton className="ms-auto" onClick={() => setShowSuccessModal(false)} />
+        </CModalHeader>
+        <CModalBody>
+          Your project has been saved locally with its sets and assemblies. Keep working offline, add QC snapshots,
+          and push status updates when connected to LAN.
+        </CModalBody>
+        <CModalFooter className="justify-content-between">
+          <CButton color="secondary" variant="ghost" onClick={() => setShowSuccessModal(false)}>
+            Close
+          </CButton>
+          <CButton
+            color="primary"
+            onClick={() => {
+              setViewMode('table')
+              setShowSuccessModal(false)
+            }}
+          >
+            Go to project table
+          </CButton>
+        </CModalFooter>
+      </CModal>
 
       <CModal alignment="center" visible={showAddModal} onClose={() => setShowAddModal(false)}>
         <CModalHeader className="fw-semibold">Add Project</CModalHeader>
