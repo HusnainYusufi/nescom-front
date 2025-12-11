@@ -88,9 +88,9 @@ const CreateProject = () => {
                   className="mb-3"
                 >
                   <option value="">Select Category</option>
-                  <option value="Arial">Arial</option>
-                  <option value="Ballistic">Ballistic</option>
-                  <option value="Cruise">Cruise</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Custom">Custom</option>
+                  <option value="Extended">Extended</option>
                 </CFormSelect>
 
                 <CFormSelect
@@ -103,9 +103,9 @@ const CreateProject = () => {
                   className="mb-4"
                 >
                   <option value="">Select Type</option>
-                  <option value="Development">Development</option>
-                  <option value="Production">Production</option>
-                  <option value="LCS">LCS</option>
+                  <option value="Prototype">Prototype</option>
+                  <option value="Pilot">Pilot</option>
+                  <option value="Operational">Operational</option>
                 </CFormSelect>
 
                 <div className="text-center">
