@@ -19,6 +19,12 @@ const ProductionHome = () => {
       to: '/production/treeview',
     },
     {
+      label: 'Create Project Wizard',
+      description:
+        'Launch a guided multi-step flow to add a project, pick its type/category, add sets, and reuse existing configurations.',
+      to: '/production/create-project-wizard',
+    },
+    {
       label: 'Directorates And Sites',
       description: 'Here you can Add, Delete, Update and View Directorates, Sub-Directorates and Sites.',
     },

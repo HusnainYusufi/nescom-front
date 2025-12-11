@@ -44,6 +44,7 @@ const ProductionTreeView = () => {
     name: '',
     code: '',
     category: '',
+    projectType: '',
     status: 'Draft',
     owner: '',
     system: '',
@@ -93,6 +94,7 @@ const ProductionTreeView = () => {
     if (!form.name.trim()) nextErrors.name = 'Project name is required'
     if (!form.code.trim()) nextErrors.code = 'Project code is required'
     if (!form.category) nextErrors.category = 'Select a category'
+    if (!form.projectType) nextErrors.projectType = 'Select a project type'
     if (!form.owner.trim()) nextErrors.owner = 'Enter an owner or team'
     if (!form.system.trim()) nextErrors.system = 'Specify the system this project belongs to'
     setErrors(nextErrors)
@@ -152,6 +154,8 @@ const ProductionTreeView = () => {
       id: `proj-${Date.now()}`,
       name: form.name,
       code: form.code,
+      category: form.category,
+      projectType: form.projectType,
       status: form.status,
       owner: form.owner,
       system: form.system,
@@ -159,7 +163,16 @@ const ProductionTreeView = () => {
     }
 
     dispatch({ type: 'addProject', project: newProject })
-    setForm({ name: '', code: '', category: '', status: 'Draft', owner: '', system: '', description: '' })
+    setForm({
+      name: '',
+      code: '',
+      category: '',
+      projectType: '',
+      status: 'Draft',
+      owner: '',
+      system: '',
+      description: '',
+    })
     setShowAddModal(false)
   }
 
@@ -228,19 +241,21 @@ const ProductionTreeView = () => {
                       <CTableHeaderCell scope="col" style={{ width: '64px' }}></CTableHeaderCell>
                       <CTableHeaderCell scope="col">Code*</CTableHeaderCell>
                       <CTableHeaderCell scope="col">Name*</CTableHeaderCell>
+                      <CTableHeaderCell scope="col">Type</CTableHeaderCell>
+                      <CTableHeaderCell scope="col">Category</CTableHeaderCell>
                       <CTableHeaderCell scope="col">Description</CTableHeaderCell>
                       <CTableHeaderCell scope="col">System</CTableHeaderCell>
                     </CTableRow>
                   </CTableHead>
                   <CTableBody>
                     <CTableRow role="button" onClick={() => setShowAddModal(true)} className="bg-light">
-                      <CTableDataCell colSpan={5} className="fw-semibold text-primary">
+                      <CTableDataCell colSpan={7} className="fw-semibold text-primary">
                         Please click here to add new row...
                       </CTableDataCell>
                     </CTableRow>
                     {projects.length === 0 ? (
                       <CTableRow>
-                        <CTableDataCell colSpan={5} className="text-center text-body-secondary py-4">
+                        <CTableDataCell colSpan={7} className="text-center text-body-secondary py-4">
                           No projects available. Use the Add Project button to create one.
                         </CTableDataCell>
                       </CTableRow>
@@ -255,6 +270,10 @@ const ProductionTreeView = () => {
                           <CTableDataCell className="text-body-secondary">▸</CTableDataCell>
                           <CTableDataCell className="fw-semibold">{project.code}</CTableDataCell>
                           <CTableDataCell>{project.name}</CTableDataCell>
+                          <CTableDataCell className="text-capitalize">
+                            {project.projectType || '—'}
+                          </CTableDataCell>
+                          <CTableDataCell>{project.category || '—'}</CTableDataCell>
                           <CTableDataCell className="text-wrap" style={{ maxWidth: '640px' }}>
                             {project.description || '—'}
                           </CTableDataCell>
@@ -348,6 +367,19 @@ const ProductionTreeView = () => {
               <option value="Aerial">Aerial</option>
               <option value="Ballistic">Ballistic</option>
               <option value="Naval">Naval</option>
+            </CFormSelect>
+            <CFormSelect
+              label="Project Type"
+              name="projectType"
+              value={form.projectType}
+              onChange={handleInputChange}
+              invalid={!!errors.projectType}
+              feedbackInvalid={errors.projectType}
+              className="mb-3"
+            >
+              <option value="">Select project type</option>
+              <option value="Special">Special</option>
+              <option value="Conventional">Conventional</option>
             </CFormSelect>
             <CFormSelect
               label="Status"
