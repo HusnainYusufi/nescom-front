@@ -16,6 +16,11 @@ import {
   CFormInput,
   CFormSelect,
   CFormTextarea,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
   CProgress,
   CRow,
 } from '@coreui/react'
@@ -84,6 +89,8 @@ const ProjectCreationWizard = () => {
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [alert, setAlert] = useState('')
   const [errors, setErrors] = useState({})
+  const [createdProject, setCreatedProject] = useState(null)
+  const [showCreateConfirmation, setShowCreateConfirmation] = useState(false)
 
   const progressValue = Math.round(((currentStep + 1) / steps.length) * 100)
 
@@ -320,9 +327,14 @@ const ProjectCreationWizard = () => {
     }
 
     dispatch({ type: 'addProject', project: newProject })
-    navigate(`/production/treeview?project=${newProject.id}`, {
-      state: { projectCreated: true, projectName: newProject.name },
-    })
+    setCreatedProject(newProject)
+    setShowCreateConfirmation(true)
+  }
+
+  const goToProjectTree = () => {
+    if (!createdProject) return
+    setShowCreateConfirmation(false)
+    navigate(`/production/treeview?project=${createdProject.id}`)
   }
 
   const renderBasics = () => (
@@ -719,6 +731,29 @@ const ProjectCreationWizard = () => {
 
   return (
     <CContainer fluid className="mt-4">
+      <CModal alignment="center" visible={showCreateConfirmation} backdrop="static">
+        <CModalHeader>
+          <CModalTitle className="fw-semibold">Project created</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <p className="mb-2">
+            <strong>{createdProject?.name}</strong> has been saved with its sets and assemblies. You can
+            continue refining it here or open the hierarchy view next.
+          </p>
+          <p className="text-body-secondary mb-0">
+            The project stays available for reuse and offline work. Choose where to go next.
+          </p>
+        </CModalBody>
+        <CModalFooter className="justify-content-between">
+          <CButton color="secondary" variant="ghost" onClick={() => setShowCreateConfirmation(false)}>
+            Stay on wizard
+          </CButton>
+          <CButton color="primary" className="fw-semibold" onClick={goToProjectTree}>
+            Open production tree view
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
       <CRow className="justify-content-center">
         <CCol lg={10}>
           <CCard className="shadow-sm border-0 wizard-card">
