@@ -39,7 +39,7 @@ const AddAssyParts = () => {
   useEffect(() => {
     setProjects([
       { id: '1', name: 'Aerial Defense System' },
-      { id: '2', name: 'Ballistic Shield Project' },
+        { id: '2', name: 'Electric Car Platform' },
       { id: '3', name: 'Cruise Launcher Initiative' },
     ])
   }, [])

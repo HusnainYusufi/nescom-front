@@ -10,18 +10,18 @@ const initialState = {
   projects: [
     {
       id: 'proj-001',
-      name: 'Phoenix Missile',
-      code: 'PX-001',
-      description: 'Baseline airframe with electrical and composite work packages.',
+      name: 'Atlas Sedan Platform',
+      code: 'AT-001',
+      description: 'Baseline electric sedan platform with wiring, body, and trim integration.',
       status: 'In Configuration',
-      owner: 'Systems Team',
-      system: 'Guidance & Control',
-      projectType: 'Conventional',
-      category: 'Ballistic',
+      owner: 'Vehicle Programs',
+      system: 'Chassis & Control',
+      projectType: 'Electric',
+      category: 'Automotive',
       qcReports: [
         {
           id: 'qc-001',
-          title: 'Composite layup witness report',
+          title: 'Body shell weld log',
           owner: 'QA Lead',
           status: 'Accepted',
           date: '2025-03-01',
@@ -30,30 +30,30 @@ const initialState = {
       sets: [
         {
           id: 'set-1',
-          name: 'Airframe Set',
+          name: 'Chassis Set',
           status: 'In Production',
           structures: [
             {
-              name: 'Center fuselage',
+              name: 'Front frame',
               status: 'In Production',
               assemblies: [
-                { name: 'Actuator cluster', status: 'In Production' },
-                { name: 'Telemetry harness', status: 'In Configuration' },
+                { name: 'Steering column', status: 'In Production' },
+                { name: 'Front harness', status: 'In Configuration' },
               ],
             },
             {
-              name: 'Wing spars',
+              name: 'Rear frame',
               status: 'In Configuration',
               assemblies: [
-                { name: 'Spar caps', status: 'Pending QC' },
-                { name: 'Root fittings', status: 'Draft' },
+                { name: 'Suspension arms', status: 'Pending QC' },
+                { name: 'Battery cradle', status: 'Draft' },
               ],
             },
           ],
           qcReports: [
             {
               id: 'qc-002',
-              title: 'Wing spar metallurgy check',
+              title: 'Suspension weld dye-penetrant check',
               owner: 'Metallurgy',
               status: 'Pending',
               date: '2025-03-05',
@@ -66,10 +66,10 @@ const initialState = {
           status: 'In Configuration',
           structures: [
             {
-              name: 'Guidance bay',
+              name: 'Control bay',
               status: 'Draft',
               assemblies: [
-                { name: 'Seeker head', status: 'Draft' },
+                { name: 'Infotainment core', status: 'Draft' },
                 { name: 'Power regulation unit', status: 'Draft' },
               ],
             },
@@ -80,14 +80,14 @@ const initialState = {
     },
     {
       id: 'proj-002',
-      name: 'Sentinel UAV',
-      code: 'SN-204',
-      description: 'Surveillance platform focused on propulsion and avionics integration.',
+      name: 'Skyline Delivery Drone',
+      code: 'SK-204',
+      description: 'Medium-range delivery drone focused on propulsion and avionics integration.',
       status: 'In Production',
       owner: 'Flight Test',
-      system: 'ISR Platform',
+      system: 'Urban Mobility',
       projectType: 'Special',
-      category: 'Aerial',
+      category: 'Aviation',
       qcReports: [
         {
           id: 'qc-003',

@@ -71,7 +71,7 @@ const ProductionModule = () => {
       },
       {
         id: '2',
-        name: 'Ballistic Shield Project',
+        name: 'Electric Car Platform',
         progress: 50,
         status: 'In Progress',
         sets: [

@@ -50,7 +50,7 @@ const FinancialDashboard = () => {
       },
       {
         id: '2',
-        name: 'Ballistic Shield Project',
+        name: 'Electric Car Platform',
         budget: 900000,
         expenses: [
           { id: 1, type: 'Research', amount: 80000, remarks: 'Material impact analysis', approved: false },

@@ -62,7 +62,10 @@ const ProductionTreeView = () => {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [activeSection, setActiveSection] = useState('general')
-  const [viewMode, setViewMode] = useState('table')
+  const [viewMode, setViewMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('view') === 'table' ? 'table' : 'card'
+  })
   const [expandedProjects, setExpandedProjects] = useState([])
   const [qcDrafts, setQcDrafts] = useState({})
   const [toast, setToast] = useState({ visible: false, message: '', color: 'success' })
@@ -83,6 +86,10 @@ const ProductionTreeView = () => {
     } else {
       setActiveSection('general')
     }
+    const viewFromUrl = params.get('view')
+    if (viewFromUrl === 'card' || viewFromUrl === 'table') {
+      setViewMode(viewFromUrl)
+    }
   }, [location.search, projects, activeProjectId, dispatch, validSections])
 
   const handleInputChange = (e) => {
@@ -99,8 +106,17 @@ const ProductionTreeView = () => {
     } else {
       params.set('section', section)
     }
+    if (viewMode) {
+      params.set('view', viewMode)
+    }
     navigate({ search: params.toString() }, { replace: true })
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    params.set('view', viewMode)
+    navigate({ search: params.toString() }, { replace: true })
+  }, [viewMode, location.search, navigate])
 
   const validate = () => {
     const nextErrors = {}
@@ -267,9 +283,10 @@ const ProductionTreeView = () => {
       const projectName = location.state.projectName || 'Project'
       setToast({ visible: true, message: `${projectName} was created successfully.`, color: 'success' })
       navigate({ pathname: location.pathname, search: location.search }, { replace: true })
+      setViewMode(location.state.viewMode === 'card' ? 'card' : viewMode)
       setShowSuccessModal(true)
     }
-  }, [location.pathname, location.search, location.state, navigate])
+  }, [location.pathname, location.search, location.state, navigate, viewMode])
 
   const renderQcReports = (project) => (
     <div className="mt-3">
@@ -614,16 +631,27 @@ const ProductionTreeView = () => {
                               <div className="fw-semibold">{project.name}</div>
                               <div className="small text-body-secondary">{project.code}</div>
                             </div>
-                            <span className="badge text-bg-light border">{project.status}</span>
+                            <CFormSelect
+                              size="sm"
+                              aria-label="Project status"
+                              value={project.status}
+                              onChange={(event) => handleStatusChange(project.id, event.target.value)}
+                              className="w-auto"
+                            >
+                              <option>Draft</option>
+                              <option>In Configuration</option>
+                              <option>In Production</option>
+                              <option>Complete</option>
+                            </CFormSelect>
                           </CCardHeader>
-                          <CCardBody>
-                            <div className="small text-body-secondary mb-2">{project.description || '—'}</div>
-                            <div className="d-flex flex-wrap gap-2 mb-3">
+                          <CCardBody className="d-flex flex-column gap-3">
+                            <div className="small text-body-secondary">{project.description || '—'}</div>
+                            <div className="d-flex flex-wrap gap-2">
                               <span className="badge text-bg-info text-white">{project.projectType}</span>
                               <span className="badge text-bg-warning text-dark">{project.category}</span>
                               <span className="badge text-bg-light border">Owner: {project.owner || '—'}</span>
                             </div>
-                            <div className="mb-3">
+                            <div>
                               <div className="fw-semibold mb-2">Sets snapshot</div>
                               <div className="d-flex flex-wrap gap-2">
                                 {getNormalizedSets(project).map((set) => (
@@ -634,7 +662,7 @@ const ProductionTreeView = () => {
                                 ))}
                               </div>
                             </div>
-                            <div className="mb-3">
+                            <div>
                               <div className="fw-semibold mb-2">Latest QC</div>
                               {(project.qcReports || []).slice(0, 2).map((report) => (
                                 <div className="d-flex align-items-center justify-content-between mb-1" key={report.id}>
@@ -646,18 +674,62 @@ const ProductionTreeView = () => {
                                 <div className="small text-body-secondary">No QC reports added yet.</div>
                               )}
                             </div>
-                            <CButton
-                              color="primary"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setExpandedProjects((prev) => [...prev, project.id])
-                                setViewMode('table')
-                                dispatch({ type: 'setActiveProject', projectId: project.id })
-                              }}
-                            >
-                              Open in table
-                            </CButton>
+                            <div className="bg-body-tertiary p-3 rounded">
+                              <div className="fw-semibold mb-2">Attach QC report</div>
+                              <CRow className="g-2">
+                                <CCol xs={12}>
+                                  <CFormInput
+                                    size="sm"
+                                    placeholder="Report title (e.g., Brake test pack)"
+                                    value={qcDrafts[project.id]?.title || ''}
+                                    onChange={(event) => handleQcDraftChange(project.id, 'title', event.target.value)}
+                                  />
+                                </CCol>
+                                <CCol sm={6}>
+                                  <CFormInput
+                                    size="sm"
+                                    placeholder="Owner / Cell"
+                                    value={qcDrafts[project.id]?.owner || ''}
+                                    onChange={(event) => handleQcDraftChange(project.id, 'owner', event.target.value)}
+                                  />
+                                </CCol>
+                                <CCol sm={6}>
+                                  <CFormSelect
+                                    size="sm"
+                                    value={qcDrafts[project.id]?.status || ''}
+                                    onChange={(event) => handleQcDraftChange(project.id, 'status', event.target.value)}
+                                  >
+                                    <option value="">Status</option>
+                                    <option value="Draft">Draft</option>
+                                    <option value="Pending QC">Pending QC</option>
+                                    <option value="Accepted">Accepted</option>
+                                  </CFormSelect>
+                                </CCol>
+                                <CCol xs={12} className="d-flex justify-content-between align-items-center">
+                                  <small className="text-body-secondary">
+                                    Add quick QC notes here. Full history stays in the expanded table view.
+                                  </small>
+                                  <CButton color="primary" size="sm" onClick={() => handleAddQcReport(project.id)}>
+                                    Save QC
+                                  </CButton>
+                                </CCol>
+                              </CRow>
+                            </div>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <span className="small text-body-secondary">Need more details? Expand in table view.</span>
+                              <CButton
+                                color="primary"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setExpandedProjects((prev) => [...prev, project.id])
+                                  setViewMode('table')
+                                  dispatch({ type: 'setActiveProject', projectId: project.id })
+                                }}
+                              >
+                                Open in table
+                              </CButton>
+                            </div>
                           </CCardBody>
                         </CCard>
                       </CCol>
@@ -770,9 +842,9 @@ const ProductionTreeView = () => {
               className="mb-3"
             >
               <option value="">Choose category</option>
-              <option value="Aerial">Aerial</option>
-              <option value="Ballistic">Ballistic</option>
-              <option value="Naval">Naval</option>
+              <option value="Automotive">Automotive</option>
+              <option value="Aviation">Aviation</option>
+              <option value="Marine">Marine</option>
             </CFormSelect>
             <CFormSelect
               label="Project Type"
