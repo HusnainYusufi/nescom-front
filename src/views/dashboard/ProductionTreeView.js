@@ -70,6 +70,13 @@ const ProductionTreeView = () => {
   const [qcDrafts, setQcDrafts] = useState({})
   const [toast, setToast] = useState({ visible: false, message: '', color: 'success' })
 
+  const formatFileSize = (bytes) => {
+    if (!bytes && bytes !== 0) return ''
+    const kb = bytes / 1024
+    if (kb < 1024) return `${kb.toFixed(1)} KB`
+    return `${(kb / 1024).toFixed(1)} MB`
+  }
+
   useEffect(() => {
     dispatch({ type: 'set', activeModule: 'production' })
     const params = new URLSearchParams(location.search)
@@ -253,6 +260,14 @@ const ProductionTreeView = () => {
     }))
   }
 
+  const handleQcFileChange = (projectId, fileList) => {
+    const file = fileList?.[0]
+    setQcDrafts((prev) => ({
+      ...prev,
+      [projectId]: { ...prev[projectId], file, fileKey: Date.now() },
+    }))
+  }
+
   const handleAddQcReport = (projectId) => {
     const project = projects.find((p) => p.id === projectId)
     const draft = qcDrafts[projectId] || {}
@@ -261,12 +276,23 @@ const ProductionTreeView = () => {
       return
     }
 
+    const attachment = draft.file
+      ? {
+          name: draft.file.name,
+          type: draft.file.type,
+          size: draft.file.size,
+          url: URL.createObjectURL(draft.file),
+        }
+      : null
+
     const newReport = {
       id: `qc-${Date.now()}`,
       title: draft.title,
       owner: draft.owner,
       status: draft.status,
       date: new Date().toISOString().slice(0, 10),
+      comments: draft.comments || '',
+      attachment,
     }
 
     dispatch({
@@ -275,7 +301,10 @@ const ProductionTreeView = () => {
       changes: { qcReports: [...(project.qcReports || []), newReport] },
     })
     setToast({ visible: true, message: 'QC report added to project.', color: 'success' })
-    setQcDrafts((prev) => ({ ...prev, [projectId]: { title: '', owner: '', status: '' } }))
+    setQcDrafts((prev) => ({
+      ...prev,
+      [projectId]: { title: '', owner: '', status: '', comments: '', file: null, fileKey: Date.now() },
+    }))
   }
 
   useEffect(() => {
@@ -302,19 +331,43 @@ const ProductionTreeView = () => {
       <CRow className="g-3">
         {(project.qcReports || []).map((report) => (
           <CCol md={6} key={report.id}>
-            <CCard className="border-start border-4 border-success h-100">
-              <CCardBody className="py-2">
-                <div className="d-flex justify-content-between align-items-start">
-                  <div>
-                    <div className="fw-semibold">{report.title}</div>
-                    <div className="small text-body-secondary">
-                      Owner: {report.owner} • {report.date || 'Dated offline'}
+              <CCard className="border-start border-4 border-success h-100">
+                <CCardBody className="py-2">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div className="fw-semibold">{report.title}</div>
+                      <div className="small text-body-secondary">
+                        Owner: {report.owner} • {report.date || 'Dated offline'}
+                      </div>
+                      {report.comments && (
+                        <div className="small text-body mt-2">
+                          <span className="text-body-secondary">Comments:</span> {report.comments}
+                        </div>
+                      )}
+                      {report.attachment && (
+                        <div className="small text-body mt-2">
+                          <div className="text-body-secondary">Attachment</div>
+                          <div className="d-flex align-items-center gap-2 flex-wrap">
+                            <a
+                              href={report.attachment.url}
+                              download={report.attachment.name}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="fw-semibold"
+                            >
+                              {report.attachment.name}
+                            </a>
+                            <span className="text-body-secondary">
+                              {formatFileSize(report.attachment.size)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
+                    <span className="badge text-bg-light text-success border">{report.status}</span>
                   </div>
-                  <span className="badge text-bg-light text-success border">{report.status}</span>
-                </div>
-              </CCardBody>
-            </CCard>
+                </CCardBody>
+              </CCard>
           </CCol>
         ))}
         <CCol md={12}>
@@ -354,6 +407,26 @@ const ProductionTreeView = () => {
                   <CButton color="success" variant="outline" onClick={() => handleAddQcReport(project.id)}>
                     Save
                   </CButton>
+                </CCol>
+              </CRow>
+              <CRow className="g-3 mt-1 align-items-end">
+                <CCol md={6}>
+                  <CFormInput
+                    key={(qcDrafts[project.id]?.fileKey ?? project.id) + '-file-input'}
+                    type="file"
+                    label="Attach QC proof (PDF, docs, images)"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*"
+                    onChange={(event) => handleQcFileChange(project.id, event.target.files)}
+                  />
+                  <div className="form-text">Attach the offline report file to keep it linked with the project.</div>
+                </CCol>
+                <CCol md={5}>
+                  <CFormInput
+                    label="Comments / notes"
+                    value={qcDrafts[project.id]?.comments || ''}
+                    onChange={(event) => handleQcDraftChange(project.id, 'comments', event.target.value)}
+                    placeholder="Add reviewer notes or context"
+                  />
                 </CCol>
               </CRow>
             </CCardBody>
