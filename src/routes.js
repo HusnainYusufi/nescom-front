@@ -35,6 +35,9 @@ const QualificationTestsOnParts = React.lazy(
 const ProjectCreationWizard = React.lazy(
   () => import('./views/pages/production/ProjectCreationWizard'),
 )
+const ProjectTimelineBoard = React.lazy(
+  () => import('./views/pages/production/ProjectTimelineBoard'),
+)
 
 // Production module pages
 const CreateProject = React.lazy(() => import('./views/pages/production/CreateProject'))
@@ -130,6 +133,11 @@ const routes = [
   { path: '/production/view-status', name: 'View Status', element: ViewStatus },
   { path: '/production/view-prm', name: 'View PRM', element: ViewPRM },
   { path: '/production/view-issues', name: 'View Issues', element: ViewIssues },
+  {
+    path: '/production/timeline',
+    name: 'Project Timeline & Discussions',
+    element: ProjectTimelineBoard,
+  },
   // UI examples
   { path: '/theme/colors', name: 'Colors', element: Colors },
   { path: '/theme/typography', name: 'Typography', element: Typography },
