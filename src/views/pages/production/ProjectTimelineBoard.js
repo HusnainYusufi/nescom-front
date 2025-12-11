@@ -6,7 +6,7 @@ import {
   cilClock,
   cilCommentBubble,
   cilPeople,
-  cilPlaylistAddCheck,
+  cilList,
   cilSpeedometer,
 } from '@coreui/icons'
 import {
@@ -259,7 +259,7 @@ const ProjectTimelineBoard = () => {
             <CCardBody className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
               <div>
                 <div className="d-flex align-items-center gap-2 mb-2 text-primary">
-                  <CIcon icon={cilPlaylistAddCheck} size="lg" />
+                  <CIcon icon={cilList} size="lg" />
                   <span className="fw-semibold text-uppercase small">Project timelines</span>
                 </div>
                 <h4 className="fw-bold mb-1">Centralized delivery & discussion board</h4>
