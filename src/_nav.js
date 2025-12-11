@@ -50,6 +50,12 @@ const _nav = [
       },
       {
         component: CNavItem,
+        name: 'Project Creation Wizard',
+        to: '/production/create-project-wizard',
+        icon: <CIcon icon={cilBolt} customClassName="nav-icon" />,
+      },
+      {
+        component: CNavItem,
         name: 'Qualification Tests',
         to: '/production/qualification-tests',
         icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,

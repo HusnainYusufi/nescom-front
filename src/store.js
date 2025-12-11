@@ -16,6 +16,22 @@ const initialState = {
       status: 'In Configuration',
       owner: 'Systems Team',
       system: 'Guidance & Control',
+      projectType: 'Conventional',
+      category: 'Ballistic',
+      sets: [
+        {
+          id: 'set-1',
+          name: 'Airframe Set',
+          structures: ['Center fuselage', 'Wing spars'],
+          assemblies: ['Actuator cluster', 'Telemetry harness'],
+        },
+        {
+          id: 'set-2',
+          name: 'Electronics Set',
+          structures: ['Guidance bay'],
+          assemblies: ['Seeker head', 'Power regulation unit'],
+        },
+      ],
     },
     {
       id: 'proj-002',
@@ -25,6 +41,22 @@ const initialState = {
       status: 'In Production',
       owner: 'Flight Test',
       system: 'ISR Platform',
+      projectType: 'Special',
+      category: 'Aerial',
+      sets: [
+        {
+          id: 'set-1',
+          name: 'Propulsion Set',
+          structures: ['Pylon mounts', 'Engine cradle'],
+          assemblies: ['Propeller kit', 'Fuel feed system'],
+        },
+        {
+          id: 'set-2',
+          name: 'Sensors Set',
+          structures: ['Nose compartment'],
+          assemblies: ['EO/IR turret', 'Navigation suite'],
+        },
+      ],
     },
   ],
   selection: {
