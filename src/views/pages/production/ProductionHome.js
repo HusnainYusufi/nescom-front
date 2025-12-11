@@ -19,6 +19,12 @@ const ProductionHome = () => {
       to: '/production/treeview',
     },
     {
+      label: 'Project Timeline & Discussions',
+      description:
+        'Track milestones, view delivery health, and keep threaded notes for every project in one collaborative view.',
+      to: '/production/timeline',
+    },
+    {
       label: 'Create Project Wizard',
       description:
         'Launch a guided multi-step flow to add a project, pick its type/category, add sets, and reuse existing configurations.',

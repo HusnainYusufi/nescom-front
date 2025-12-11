@@ -9,6 +9,7 @@ import {
   cilChart,
   cilWarning,
   cilLayers,
+  cilClock,
 } from '@coreui/icons'
 import { CNavTitle, CNavItem, CNavGroup } from '@coreui/react'
 
@@ -47,6 +48,12 @@ const _nav = [
         name: 'Project Lifecycle',
         to: '/production/project-lifecycle',
         icon: <CIcon icon={cilLayers} customClassName="nav-icon" />,
+      },
+      {
+        component: CNavItem,
+        name: 'Timeline & Discussions',
+        to: '/production/timeline',
+        icon: <CIcon icon={cilClock} customClassName="nav-icon" />,
       },
       {
         component: CNavItem,
