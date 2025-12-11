@@ -59,6 +59,16 @@ const ProjectCreationWizard = () => {
 
   const progressValue = Math.round(((currentStep + 1) / steps.length) * 100)
 
+  const stepStates = useMemo(
+    () =>
+      steps.map((step, index) => {
+        if (index < currentStep) return { ...step, state: 'complete' }
+        if (index === currentStep) return { ...step, state: 'active' }
+        return { ...step, state: 'upcoming' }
+      }),
+    [currentStep, steps],
+  )
+
   const updateSetField = (setId, field, value) => {
     setSets((prev) => prev.map((set) => (set.id === setId ? { ...set, [field]: value } : set)))
   }
@@ -484,8 +494,8 @@ const ProjectCreationWizard = () => {
     <CContainer fluid className="mt-4">
       <CRow className="justify-content-center">
         <CCol lg={10}>
-          <CCard className="shadow-sm border-0">
-            <CCardHeader className="bg-white border-0 pb-0">
+          <CCard className="shadow-sm border-0 wizard-card">
+            <CCardHeader className="wizard-card__header border-0 pb-0">
               <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                 <div>
                   <h4 className="mb-1">Create a project</h4>
@@ -495,18 +505,22 @@ const ProjectCreationWizard = () => {
                   Guided wizard
                 </CBadge>
               </div>
-              <CProgress height={10} color="primary" value={progressValue} className="mb-3" />
-              <div className="d-flex flex-wrap gap-3 mb-3">
-                {steps.map((step, index) => (
-                  <div
-                    key={step.key}
-                    className={`d-flex flex-column step-pill ${index === currentStep ? 'active' : ''}`}
-                  >
-                    <span className="fw-semibold">{index + 1}. {step.title}</span>
-                    <small className="text-body-secondary">{step.summary}</small>
-                  </div>
+              <CProgress height={12} color="primary" value={progressValue} className="mb-3 wizard-progress" />
+              <CRow className="g-3 mb-3 wizard-steps" role="list">
+                {stepStates.map((step, index) => (
+                  <CCol key={step.key} sm={6} lg={3} role="listitem">
+                    <div className={`wizard-step wizard-step--${step.state}`}>
+                      <div className="wizard-step__icon">
+                        {step.state === 'complete' ? '✓' : index + 1}
+                      </div>
+                      <div className="wizard-step__content">
+                        <span className="wizard-step__title">{step.title}</span>
+                        <small className="text-body-secondary d-block">{step.summary}</small>
+                      </div>
+                    </div>
+                  </CCol>
                 ))}
-              </div>
+              </CRow>
             </CCardHeader>
             <CCardBody>
               {alert && (
@@ -541,15 +555,67 @@ const ProjectCreationWizard = () => {
 
       <style>
         {`
-          .step-pill {
-            padding: 0.75rem 1rem;
-            border-radius: 0.75rem;
-            background: #f8f9fa;
-            min-width: 180px;
+          .wizard-card {
+            background: var(--cui-body-bg);
           }
-          .step-pill.active {
-            background: #e8f0ff;
-            border: 1px solid #6ea8fe;
+          .wizard-card__header {
+            background: transparent;
+          }
+          .wizard-progress {
+            --cui-progress-bg: var(--cui-tertiary-bg);
+          }
+          .wizard-steps {
+            --wizard-step-gap: 0.75rem;
+          }
+          .wizard-step {
+            display: flex;
+            gap: var(--wizard-step-gap);
+            align-items: center;
+            border: 1px solid var(--cui-border-color);
+            border-radius: 0.75rem;
+            padding: 0.75rem 0.85rem;
+            background: var(--cui-body-bg);
+            min-height: 80px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+          }
+          .wizard-step__icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            background: var(--cui-tertiary-bg);
+            color: var(--cui-body-color);
+          }
+          .wizard-step__title {
+            font-weight: 700;
+            display: block;
+          }
+          .wizard-step--active {
+            border-color: var(--cui-primary);
+            box-shadow: 0 6px 18px rgba(0, 98, 204, 0.25);
+          }
+          .wizard-step--active .wizard-step__icon {
+            background: var(--cui-primary);
+            color: #fff;
+          }
+          .wizard-step--complete {
+            border-color: var(--cui-success);
+            background: rgba(25, 135, 84, 0.08);
+          }
+          .wizard-step--complete .wizard-step__icon {
+            background: var(--cui-success);
+            color: #fff;
+          }
+          .wizard-step--upcoming {
+            opacity: 0.8;
+          }
+          @media (max-width: 767.98px) {
+            .wizard-step {
+              min-height: auto;
+            }
           }
         `}
       </style>
