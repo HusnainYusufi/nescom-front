@@ -12,8 +12,8 @@ import CIcon from '@coreui/icons-react'
 import { useNavigate } from 'react-router-dom'
 import authService from 'src/services/authService'
 
-// ✅ Direct image link (safe public icon)
-const BOT_AVATAR_URL = 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png'
+// Local asset so the header stays functional without internet access
+const BOT_AVATAR_URL = '/assets/bot-avatar.svg'
 
 const AppHeaderDropdown = () => {
   const navigate = useNavigate()

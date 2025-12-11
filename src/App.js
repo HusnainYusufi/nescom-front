@@ -7,6 +7,8 @@ import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
 import './scss/examples.scss'
 
+import ErrorBoundary from './components/ErrorBoundary'
+
 // Layout & pages
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
 const Login         = React.lazy(() => import('./views/pages/login/Login'))
@@ -30,26 +32,28 @@ const App = () => {
 
   return (
     <HashRouter>
-      <Suspense
-        fallback={
-          <div className="pt-3 text-center">
-            <CSpinner color="primary" variant="grow" />
-          </div>
-        }
-      >
-        <Routes>
-          {/* Public */}
-          <Route path="/login"    element={<Login    />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/404"      element={<Page404  />} />
-          <Route path="/500"      element={<Page500  />} />
+      <ErrorBoundary>
+        <Suspense
+          fallback={
+            <div className="pt-3 text-center">
+              <CSpinner color="primary" variant="grow" />
+            </div>
+          }
+        >
+          <Routes>
+            {/* Public */}
+            <Route path="/login"    element={<Login    />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/404"      element={<Page404  />} />
+            <Route path="/500"      element={<Page500  />} />
 
-          {/* Protected: all other paths */}
-          <Route element={<ProtectedRoute />}>  
-            <Route path="/*" element={<DefaultLayout />} />
-          </Route>
-        </Routes>
-      </Suspense>
+            {/* Protected: all other paths */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/*" element={<DefaultLayout />} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </HashRouter>
   )
 }
