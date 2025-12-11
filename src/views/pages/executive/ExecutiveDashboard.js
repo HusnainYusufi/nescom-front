@@ -51,21 +51,21 @@ const ExecutiveDashboard = () => {
 
     setProjectProgress([
       { name: 'Aerial Defense', progress: 80 },
-      { name: 'Ballistic Shield', progress: 60 },
+      { name: 'Electric Car Platform', progress: 60 },
       { name: 'Cruise Launcher', progress: 45 },
       { name: 'Radar Vision', progress: 90 },
     ])
 
     setFinancialStatus([
       { project: 'Aerial Defense', budget: 1_500_000, spent: 1_200_000 },
-      { project: 'Ballistic Shield', budget: 900_000, spent: 800_000 },
+      { project: 'Electric Car Platform', budget: 900_000, spent: 800_000 },
       { project: 'Cruise Launcher', budget: 1_200_000, spent: 1_050_000 },
       { project: 'Radar Vision', budget: 800_000, spent: 650_000 },
     ])
 
     setAlerts([
       { type: 'Budget Overrun', project: 'Cruise Launcher', severity: 'danger' },
-      { type: 'Delay Alert', project: 'Ballistic Shield', severity: 'warning' },
+      { type: 'Delay Alert', project: 'Electric Car Platform', severity: 'warning' },
     ])
   }, [])
 

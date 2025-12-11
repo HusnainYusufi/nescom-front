@@ -368,9 +368,9 @@ const ProjectCreationWizard = () => {
           feedbackInvalid={errors.category}
         >
           <option value="">Select category</option>
-          <option value="Aerial">Aerial</option>
-          <option value="Ballistic">Ballistic</option>
-          <option value="Naval">Naval</option>
+          <option value="Automotive">Automotive</option>
+          <option value="Aviation">Aviation</option>
+          <option value="Marine">Marine</option>
         </CFormSelect>
       </CCol>
       <CCol md={6}>

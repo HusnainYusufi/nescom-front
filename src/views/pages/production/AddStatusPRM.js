@@ -53,7 +53,7 @@ const AddStatusPRM = () => {
             >
               <option value="">Select</option>
               <option value="Aerial Defense System">Aerial Defense System</option>
-              <option value="Ballistic Shield Project">Ballistic Shield Project</option>
+              <option value="Electric Car Platform">Electric Car Platform</option>
             </CFormSelect>
 
             <CFormSelect
