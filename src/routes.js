@@ -41,6 +41,9 @@ const AddAssyParts = React.lazy(() => import('./views/pages/production/AddAssyPa
 const AddStatus = React.lazy(() => import('./views/pages/production/AddStatus'))
 const AddStatusPRM = React.lazy(() => import('./views/pages/production/AddStatusPRM'))
 const ProjectSummaryView = React.lazy(() => import('./views/pages/production/ProjectSummaryView'))
+const ProjectLifecycleWizard = React.lazy(
+  () => import('./views/pages/production/ProjectLifecycleWizard'),
+)
 // const AddCriticalIssue = React.lazy(() => import('./views/pages/production/'))
 
 // CoreUI example pages
@@ -107,6 +110,11 @@ const routes = [
   { path: '/production/add-prm-status', name: 'Add PRM Status', element: AddStatusPRM },
   // { path: '/production/add-critical-issue', name: 'Add Critical Issue', element: AddCriticalIssue },
   { path: '/production/project-summary', name: 'Project Summary', element: ProjectSummaryView },
+  {
+    path: '/production/project-lifecycle',
+    name: 'Project Lifecycle',
+    element: ProjectLifecycleWizard,
+  },
   { path: '/production/view-projects', name: 'View Projects', element: ViewProjects },
   { path: '/production/view-sets', name: 'View Sets', element: ViewSets },
   { path: '/production/view-meetings', name: 'View Meetings', element: ViewMeetings },
