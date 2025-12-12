@@ -103,6 +103,85 @@ body {
   }
 }
 
+// Project timeline styling
+.timeline-surface {
+  background: radial-gradient(circle at 10% 20%, #1d2842 0, rgba(29, 40, 66, 0) 25%),
+    radial-gradient(circle at 90% 10%, #0f766e 0, rgba(15, 118, 110, 0) 18%),
+    linear-gradient(135deg, #0b1224, #0f172a);
+  min-height: calc(100vh - 4rem);
+}
+
+.timeline-hero {
+  background: linear-gradient(120deg, #1d4ed8, #0ea5e9 60%, #14b8a6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.timeline-hero__icon {
+  width: 3rem;
+  height: 3rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.timeline-card {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  color: #e2e8f0;
+}
+
+.timeline-card__header {
+  background: transparent;
+  border: 0;
+  color: #e2e8f0;
+}
+
+.timeline-card__body {
+  background: transparent;
+  color: #e2e8f0;
+}
+
+.timeline-progress {
+  --cui-progress-height: 0.4rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.timeline-flow {
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 2.5rem;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 0.3rem;
+  top: 0.35rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #6366f1);
+  box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.12);
+}
+
+.timeline-line {
+  position: absolute;
+  left: 0.75rem;
+  top: 1.5rem;
+  bottom: -0.5rem;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.6), rgba(14, 165, 233, 0.1));
+}
+
+.timeline-content {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
 @media (max-width: 991.98px) {
   .app-sidebar {
     --cui-sidebar-width: 100vw;
