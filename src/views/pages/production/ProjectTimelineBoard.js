@@ -1,6 +1,6 @@
 // src/views/pages/production/ProjectTimelineBoard.js
 import React, { useEffect, useMemo, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import CIcon from '@coreui/icons-react'
 import {
   cilClock,
@@ -33,171 +33,6 @@ import {
   CTooltip,
 } from '@coreui/react'
 
-const projectsSeed = [
-  {
-    id: 'eagle',
-    name: 'Eagle UCAV Integration',
-    code: 'PRJ-204',
-    manager: 'Eng. Sarah Ahmed',
-    stage: 'Systems Integration',
-    progress: 68,
-    health: 'On Track',
-    summary:
-      'Integrating avionics, comms stack, and payload pods; validating flight control firmware updates and EMI performance.',
-    focusAreas: ['Payload Qualification', 'Flight Control', 'Quality Assurance'],
-    milestones: [
-      {
-        id: 'frz',
-        date: '12 Sep',
-        title: 'Hardware Freeze',
-        status: 'Complete',
-        owner: 'Hardware PMO',
-        detail: 'All critical boards signed off and released to production.',
-      },
-      {
-        id: 'flt',
-        date: '18 Sep',
-        title: 'Captive Carry Test',
-        status: 'In Progress',
-        owner: 'Flight Test',
-        detail: 'Ground telemetry rehearsals underway; air clearance window booked.',
-      },
-      {
-        id: 'fw',
-        date: '25 Sep',
-        title: 'FW v2.4 Sign-off',
-        status: 'At Risk',
-        owner: 'Controls',
-        detail: 'Stability loops stable; awaiting updated actuator drivers from vendor.',
-      },
-    ],
-    comments: [
-      {
-        id: 'c1',
-        author: 'QA Lead',
-        role: 'Quality',
-        text: 'EMI chamber booked for 19 Sep. Need firmware freeze 24h earlier for fixtures.',
-        time: '2h ago',
-      },
-      {
-        id: 'c2',
-        author: 'Flight Ops',
-        role: 'Operations',
-        text: 'Pilot brief updated with new telemetry bands. Risk log shared in drive.',
-        time: '5h ago',
-      },
-    ],
-  },
-  {
-    id: 'lynx',
-    name: 'Lynx ISR Suite',
-    code: 'PRJ-117',
-    manager: 'Squadron Ldr. Imran',
-    stage: 'Qualification',
-    progress: 82,
-    health: 'Guarded',
-    summary:
-      'ISR payload retrofit across the fleet with optimized power profiles and improved encrypted data relays.',
-    focusAreas: ['Thermals', 'Data Link', 'Certification'],
-    milestones: [
-      {
-        id: 'dl',
-        date: '09 Sep',
-        title: 'Data Link Redesign',
-        status: 'Complete',
-        owner: 'Systems',
-        detail: 'Low-SWaP antennas validated; AES module passed soak test.',
-      },
-      {
-        id: 'cert',
-        date: '14 Sep',
-        title: 'CAA Conformity Review',
-        status: 'In Progress',
-        owner: 'Certification',
-        detail: 'Document set shared; waiting on revised load case for hardpoint B.',
-      },
-      {
-        id: 'thermal',
-        date: '22 Sep',
-        title: 'Thermal Soak',
-        status: 'Upcoming',
-        owner: 'QA',
-        detail: 'Need final heat spreader layout before starting 48h cycle.',
-      },
-    ],
-    comments: [
-      {
-        id: 'c3',
-        author: 'Systems Eng',
-        role: 'Engineering',
-        text: 'Re-baselined BOM signed; shipment ETA 3 days earlier after vendor confirmation.',
-        time: '1d ago',
-      },
-      {
-        id: 'c4',
-        author: 'QA Lead',
-        role: 'Quality',
-        text: 'Thermal sensors calibrated; awaiting updated duty cycle for test script.',
-        time: '2d ago',
-      },
-    ],
-  },
-  {
-    id: 'atlas',
-    name: 'Atlas Powertrain',
-    code: 'PRJ-089',
-    manager: 'Eng. Mariam Khan',
-    stage: 'Build & Validation',
-    progress: 54,
-    health: 'Watch',
-    summary:
-      'Hybrid powertrain upgrade with new fuel control unit and redundant power distribution for maritime deployments.',
-    focusAreas: ['Power Electronics', 'Reliability', 'Supply Chain'],
-    milestones: [
-      {
-        id: 'bench',
-        date: '11 Sep',
-        title: 'Bench Test Cycle 2',
-        status: 'Complete',
-        owner: 'R&D Lab',
-        detail: '8-hour run closed with stable temps across converters.',
-      },
-      {
-        id: 'supply',
-        date: '16 Sep',
-        title: 'Supply Assurance',
-        status: 'At Risk',
-        owner: 'SCM',
-        detail: 'Fuel control units on 1-week slip; mitigation PO raised.',
-      },
-      {
-        id: 'harbor',
-        date: '28 Sep',
-        title: 'Harbor Trials',
-        status: 'Upcoming',
-        owner: 'Naval Ops',
-        detail: 'Dock slot confirmed; instrumentation kit being prepped.',
-      },
-    ],
-    comments: [
-      {
-        id: 'c5',
-        author: 'Supply Chain',
-        role: 'SCM',
-        text: 'Alternate supplier ready to ship 5 FCUs if tests pass; need decision by Friday.',
-        time: '6h ago',
-      },
-      {
-        id: 'c6',
-        author: 'Program Manager',
-        role: 'PMO',
-        text: 'Updated risk profile shared with leadership; mitigation owner assigned.',
-        time: '1d ago',
-      },
-    ],
-  },
-]
-
 const statusAccent = {
   Complete: 'success',
   'In Progress': 'info',
@@ -211,11 +46,102 @@ const healthTone = {
   Watch: 'danger',
 }
 
+const statusScore = {
+  Draft: 30,
+  'In Configuration': 45,
+  'In Production': 75,
+  Complete: 100,
+  'Pending QC': 60,
+  'In Review': 55,
+}
+
+const mapStatusToTimeline = (status = '') => {
+  const normalized = status.toLowerCase()
+  if (normalized.includes('complete')) return 'Complete'
+  if (normalized.includes('production')) return 'In Progress'
+  if (normalized.includes('pending') || normalized.includes('review')) return 'At Risk'
+  if (normalized.includes('configuration')) return 'Upcoming'
+  return 'Upcoming'
+}
+
+const deriveProjectFromStore = (project) => {
+  const sets = project.sets || []
+  const statuses = []
+  let structuresCount = 0
+  let assembliesCount = 0
+
+  sets.forEach((set) => {
+    if (set.status) statuses.push(set.status)
+    ;(set.structures || []).forEach((structure) => {
+      structuresCount += 1
+      if (structure.status) statuses.push(structure.status)
+      ;(structure.assemblies || []).forEach((assembly) => {
+        assembliesCount += 1
+        if (assembly.status) statuses.push(assembly.status)
+      })
+    })
+  })
+
+  const progress = statuses.length
+    ? Math.min(
+        100,
+        Math.round(statuses.reduce((sum, status) => sum + (statusScore[status] || 40), 0) / statuses.length),
+      )
+    : 15
+
+  const milestones = sets.flatMap((set) => [
+    {
+      id: `${project.id}-${set.id}`,
+      date: set.status || '—',
+      title: set.name,
+      status: mapStatusToTimeline(set.status),
+      owner: project.owner || 'Owner',
+      detail: `${(set.structures || []).length} structures • ${(set.qcReports || []).length} QC files`,
+    },
+    ...(set.structures || []).map((structure) => ({
+      id: `${project.id}-${set.id}-${structure.name}`,
+      date: structure.status || '—',
+      title: `${structure.name} assemblies (${structure.assemblies?.length || 0})`,
+      status: mapStatusToTimeline(structure.status),
+      owner: project.owner || 'Owner',
+      detail: `${structure.qcReports?.length || 0} QC logs • ${
+        (structure.assemblies || []).reduce((sum, assembly) => sum + (assembly.qcReports?.length || 0), 0)
+      } assembly attachments`,
+    })),
+  ])
+
+  const health = progress >= 75 ? 'On Track' : progress >= 50 ? 'Guarded' : 'Watch'
+  const focusAreas = sets.length ? sets.map((set) => set.name) : ['Production readiness']
+  const defaultComments = [
+    {
+      id: `${project.id}-quality`,
+      author: 'Quality',
+      role: 'Quality',
+      text: `${sets.length} set(s) with ${structuresCount} structures and ${assembliesCount} assemblies tracked.`,
+      time: 'Today',
+    },
+  ]
+
+  return {
+    ...project,
+    progress,
+    health,
+    stage: project.stage || project.status || 'Not started',
+    summary: project.description || 'No description shared yet for this project.',
+    focusAreas,
+    milestones,
+    comments: project.comments?.length ? project.comments : defaultComments,
+    structuresCount,
+    assembliesCount,
+  }
+}
 const ProjectTimelineBoard = () => {
   const dispatch = useDispatch()
-  const [projects, setProjects] = useState(projectsSeed)
+  const projectsFromStore = useSelector((state) => state.projects)
+  const activeProjectId = useSelector((state) => state.activeProjectId)
+  const [projects, setProjects] = useState([])
   const [selectedProjectId, setSelectedProjectId] = useState(null)
-  const [pendingProjectId, setPendingProjectId] = useState(projectsSeed[0].id)
+  const [pendingProjectId, setPendingProjectId] = useState(null)
   const [showProjectModal, setShowProjectModal] = useState(true)
   const [commentForm, setCommentForm] = useState({
     author: '',
@@ -227,10 +153,31 @@ const ProjectTimelineBoard = () => {
     dispatch({ type: 'set', activeModule: 'production' })
   }, [dispatch])
 
+  useEffect(() => {
+    const derivedProjects = projectsFromStore.map(deriveProjectFromStore)
+    setProjects((previous) => {
+      const previousComments = Object.fromEntries(previous.map((project) => [project.id, project.comments]))
+      return derivedProjects.map((project) => ({
+        ...project,
+        comments: previousComments[project.id] || project.comments,
+      }))
+    })
+
+    if (projectsFromStore.length) {
+      const fallbackId = activeProjectId || selectedProjectId || projectsFromStore[0].id
+      setPendingProjectId((current) => current || fallbackId)
+      setSelectedProjectId((current) => current || fallbackId)
+    }
+  }, [projectsFromStore, activeProjectId, selectedProjectId])
+
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === selectedProjectId),
     [projects, selectedProjectId],
   )
+
+  const selectedSetsCount = selectedProject?.sets?.length ?? 0
+  const selectedStructuresCount = selectedProject?.structuresCount ?? 0
+  const selectedAssembliesCount = selectedProject?.assembliesCount ?? 0
 
   const handleCommentSubmit = (event) => {
     event.preventDefault()
@@ -266,11 +213,11 @@ const ProjectTimelineBoard = () => {
 
   const closeModal = () => {
     setShowProjectModal(false)
-    setPendingProjectId(selectedProjectId ?? projects[0].id)
+    setPendingProjectId(selectedProjectId ?? projects[0]?.id ?? null)
   }
 
   const reopenModal = () => {
-    setPendingProjectId(selectedProjectId ?? projects[0].id)
+    setPendingProjectId(selectedProjectId ?? projects[0]?.id ?? null)
     setShowProjectModal(true)
   }
 
@@ -310,7 +257,7 @@ const ProjectTimelineBoard = () => {
           <CButton color="secondary" variant="outline" onClick={closeModal} disabled={!selectedProjectId}>
             Cancel
           </CButton>
-          <CButton color="primary" className="px-4" onClick={handleProjectConfirm}>
+          <CButton color="primary" className="px-4" onClick={handleProjectConfirm} disabled={!pendingProjectId}>
             Load timeline
           </CButton>
         </CModalFooter>
@@ -326,7 +273,9 @@ const ProjectTimelineBoard = () => {
               <p className="text-uppercase small mb-1 opacity-75">Product timelines</p>
               <h3 className="fw-bold mb-2">Centralized delivery & discussion board</h3>
               <p className="mb-0 text-white-50">
-                Pick your project to review milestones, surface risks early, and keep conversations aligned in one place.
+                {selectedProject
+                  ? `${selectedSetsCount} sets • ${selectedStructuresCount} structures • ${selectedAssembliesCount} assemblies in view.`
+                  : 'Pick your project to review milestones, surface risks early, and keep conversations aligned in one place.'}
               </p>
             </div>
           </div>
@@ -393,6 +342,11 @@ const ProjectTimelineBoard = () => {
                       value={selectedProject.progress}
                       className="timeline-progress"
                     />
+                    <div className="d-flex justify-content-between small text-white-50 mt-3">
+                      <span>{selectedSetsCount} sets</span>
+                      <span>{selectedStructuresCount} structures</span>
+                      <span>{selectedAssembliesCount} assemblies</span>
+                    </div>
                   </div>
                   <div className="d-flex flex-wrap gap-2">
                     {selectedProject.focusAreas.map((area) => (
@@ -422,34 +376,44 @@ const ProjectTimelineBoard = () => {
                 <h6 className="fw-bold mb-0">Milestones & decisions</h6>
               </div>
               <CBadge color="info" className="px-3">
-                <CIcon icon={cilClock} className="me-2" /> Live sync ready
+                <CIcon icon={cilClock} className="me-2" /> {selectedSetsCount} sets / {selectedAssembliesCount}{' '}
+                assemblies
               </CBadge>
             </CCardHeader>
             <CCardBody className="timeline-card__body">
               {selectedProject ? (
-                <div className="timeline-flow">
-                  {selectedProject.milestones.map((milestone, idx) => (
-                    <div key={milestone.id} className="timeline-item pb-4">
-                      <div className="timeline-dot" />
-                      <div className="timeline-line" hidden={idx === selectedProject.milestones.length - 1} />
-                      <div className="timeline-content">
-                        <div className="d-flex justify-content-between align-items-start mb-1">
-                          <div className="d-flex align-items-center gap-2">
-                            <strong className="text-white">{milestone.title}</strong>
-                            <CTooltip content={`Owner: ${milestone.owner}`} placement="bottom">
-                              <CBadge color={statusAccent[milestone.status]} className="px-3">
-                                {milestone.status}
-                              </CBadge>
-                            </CTooltip>
+                <>
+                  <div className="d-flex flex-wrap gap-2 mb-3">
+                    {(selectedProject.sets || []).map((set) => (
+                      <CBadge key={set.id} color="light" className="border text-white">
+                        {set.name} • {set.structures?.length || 0} structures
+                      </CBadge>
+                    ))}
+                  </div>
+                  <div className="timeline-flow">
+                    {selectedProject.milestones.map((milestone, idx) => (
+                      <div key={milestone.id} className="timeline-item pb-4">
+                        <div className="timeline-dot" />
+                        <div className="timeline-line" hidden={idx === selectedProject.milestones.length - 1} />
+                        <div className="timeline-content">
+                          <div className="d-flex justify-content-between align-items-start mb-1">
+                            <div className="d-flex align-items-center gap-2">
+                              <strong className="text-white">{milestone.title}</strong>
+                              <CTooltip content={`Owner: ${milestone.owner}`} placement="bottom">
+                                <CBadge color={statusAccent[milestone.status]} className="px-3">
+                                  {milestone.status}
+                                </CBadge>
+                              </CTooltip>
+                            </div>
+                            <span className="small text-white-50">{milestone.date}</span>
                           </div>
-                          <span className="small text-white-50">{milestone.date}</span>
+                          <p className="mb-1 text-white-50 small">{milestone.detail}</p>
+                          <p className="small text-white-50 mb-0">Owner: {milestone.owner}</p>
                         </div>
-                        <p className="mb-1 text-white-50 small">{milestone.detail}</p>
-                        <p className="small text-white-50 mb-0">Owner: {milestone.owner}</p>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="text-center text-white-50 py-4">Select a project to view its timeline.</div>
               )}

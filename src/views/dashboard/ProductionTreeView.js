@@ -7,6 +7,7 @@ import {
   CCard,
   CCardBody,
   CCardHeader,
+  CBadge,
   CCloseButton,
   CCol,
   CContainer,
@@ -230,15 +231,20 @@ const ProductionTreeView = () => {
     (project.sets || []).map((set) => {
       const normalizedStructures = (set.structures || []).map((structure) =>
         typeof structure === 'string'
-          ? { name: structure, status: 'Draft', assemblies: [] }
+          ? { name: structure, status: 'Draft', assemblies: [], qcReports: [] }
           : {
               name: structure.name,
               status: structure.status || 'Draft',
               assemblies: (structure.assemblies || []).map((assembly) =>
                 typeof assembly === 'string'
-                  ? { name: assembly, status: 'Draft' }
-                  : { name: assembly.name, status: assembly.status || 'Draft' },
+                  ? { name: assembly, status: 'Draft', qcReports: [] }
+                  : {
+                      name: assembly.name,
+                      status: assembly.status || 'Draft',
+                      qcReports: assembly.qcReports || [],
+                    },
               ),
+              qcReports: structure.qcReports || [],
             },
       )
 
@@ -271,8 +277,17 @@ const ProductionTreeView = () => {
   const handleAddQcReport = (projectId) => {
     const project = projects.find((p) => p.id === projectId)
     const draft = qcDrafts[projectId] || {}
-    if (!project || !draft.title || !draft.owner || !draft.status) {
-      setToast({ visible: true, message: 'Add QC title, owner, and status.', color: 'warning' })
+    const normalizedSets = project ? getNormalizedSets(project) : []
+    const targetSetId = draft.setId || normalizedSets[0]?.id
+    const targetStructure = draft.structureName || ''
+    const targetAssembly = draft.assemblyName || ''
+
+    if (!project || !draft.title || !draft.owner || !draft.status || !targetSetId) {
+      setToast({
+        visible: true,
+        message: 'Add QC title, owner, status, and pick the target set/structure/assembly.',
+        color: 'warning',
+      })
       return
     }
 
@@ -293,17 +308,71 @@ const ProductionTreeView = () => {
       date: new Date().toISOString().slice(0, 10),
       comments: draft.comments || '',
       attachment,
+      target: {
+        setId: targetSetId,
+        structureName: targetStructure || null,
+        assemblyName: targetAssembly || null,
+      },
     }
+
+    const updatedSets = normalizedSets.map((set) => {
+      if (set.id !== targetSetId) return set
+
+      if (targetAssembly && targetStructure) {
+        return {
+          ...set,
+          structures: set.structures.map((structure) =>
+            structure.name === targetStructure
+              ? {
+                  ...structure,
+                  assemblies: structure.assemblies.map((assembly) =>
+                    assembly.name === targetAssembly
+                      ? { ...assembly, qcReports: [...(assembly.qcReports || []), newReport] }
+                      : assembly,
+                  ),
+                }
+              : structure,
+          ),
+        }
+      }
+
+      if (targetStructure) {
+        return {
+          ...set,
+          structures: set.structures.map((structure) =>
+            structure.name === targetStructure
+              ? { ...structure, qcReports: [...(structure.qcReports || []), newReport] }
+              : structure,
+          ),
+        }
+      }
+
+      return { ...set, qcReports: [...(set.qcReports || []), newReport] }
+    })
 
     dispatch({
       type: 'updateProject',
       projectId,
-      changes: { qcReports: [...(project.qcReports || []), newReport] },
+      changes: { sets: updatedSets },
     })
-    setToast({ visible: true, message: 'QC report added to project.', color: 'success' })
+    setToast({
+      visible: true,
+      message: 'QC report added to the selected set or assembly.',
+      color: 'success',
+    })
     setQcDrafts((prev) => ({
       ...prev,
-      [projectId]: { title: '', owner: '', status: '', comments: '', file: null, fileKey: Date.now() },
+      [projectId]: {
+        title: '',
+        owner: '',
+        status: '',
+        comments: '',
+        file: null,
+        fileKey: Date.now(),
+        setId: targetSetId,
+        structureName: targetStructure,
+        assemblyName: '',
+      },
     }))
   }
 
@@ -317,67 +386,163 @@ const ProductionTreeView = () => {
     }
   }, [location.pathname, location.search, location.state, navigate, viewMode])
 
-  const renderQcReports = (project) => (
-    <div className="mt-3">
-      <div className="d-flex align-items-center justify-content-between mb-2">
-        <div className="d-flex align-items-center gap-2">
-          <CIcon icon={cilInfo} className="text-info" />
-          <span className="fw-semibold">QC Reports</span>
+  const renderQcReports = (project) => {
+    const sets = getNormalizedSets(project)
+    const draft = qcDrafts[project.id] || {}
+    const selectedSetId = draft.setId || sets[0]?.id || ''
+    const selectedSet = sets.find((set) => set.id === selectedSetId)
+    const selectedStructureName = draft.structureName || ''
+    const selectedStructure = (selectedSet?.structures || []).find(
+      (structure) => structure.name === selectedStructureName,
+    )
+    const qcReports = sets.flatMap((set) => [
+      ...(set.qcReports || []).map((report) => ({
+        ...report,
+        location: `Set • ${set.name}`,
+      })),
+      ...(set.structures || []).flatMap((structure) => [
+        ...(structure.qcReports || []).map((report) => ({
+          ...report,
+          location: `Structure • ${structure.name}`,
+        })),
+        ...(structure.assemblies || []).flatMap((assembly) =>
+          (assembly.qcReports || []).map((report) => ({
+            ...report,
+            location: `Assembly • ${assembly.name}`,
+          })),
+        ),
+      ]),
+    ])
+
+    return (
+      <div className="mt-3">
+        <div className="d-flex align-items-center justify-content-between mb-2">
+          <div className="d-flex align-items-center gap-2">
+            <CIcon icon={cilInfo} className="text-info" />
+            <span className="fw-semibold">QC Reports</span>
+          </div>
+          <CTooltip content="Attach QC proofs to sets, structures, or assemblies. Track unlimited reports per item.">
+            <CIcon icon={cilWarning} className="text-warning" />
+          </CTooltip>
         </div>
-        <CTooltip content="Add offline QC proof or report and keep it attached with the project.">
-          <CIcon icon={cilWarning} className="text-warning" />
-        </CTooltip>
-      </div>
-      <CRow className="g-3">
-        {(project.qcReports || []).map((report) => (
-          <CCol md={6} key={report.id}>
-              <CCard className="border-start border-4 border-success h-100">
-                <CCardBody className="py-2">
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div>
-                      <div className="fw-semibold">{report.title}</div>
-                      <div className="small text-body-secondary">
-                        Owner: {report.owner} • {report.date || 'Dated offline'}
-                      </div>
-                      {report.comments && (
-                        <div className="small text-body mt-2">
-                          <span className="text-body-secondary">Comments:</span> {report.comments}
+        {qcReports.length === 0 ? (
+          <div className="small text-body-secondary">No QC reports captured yet for this build tree.</div>
+        ) : (
+          <CRow className="g-3">
+            {qcReports.map((report) => (
+              <CCol md={6} key={report.id}>
+                <CCard className="border-start border-4 border-success h-100">
+                  <CCardBody className="py-2">
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div>
+                        <div className="fw-semibold">{report.title}</div>
+                        <div className="small text-body-secondary">{report.location}</div>
+                        <div className="small text-body-secondary">
+                          Owner: {report.owner} • {report.date || 'Dated offline'}
                         </div>
-                      )}
-                      {report.attachment && (
-                        <div className="small text-body mt-2">
-                          <div className="text-body-secondary">Attachment</div>
-                          <div className="d-flex align-items-center gap-2 flex-wrap">
-                            <a
-                              href={report.attachment.url}
-                              download={report.attachment.name}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="fw-semibold"
-                            >
-                              {report.attachment.name}
-                            </a>
-                            <span className="text-body-secondary">
-                              {formatFileSize(report.attachment.size)}
-                            </span>
+                        {report.comments && (
+                          <div className="small text-body mt-2">
+                            <span className="text-body-secondary">Comments:</span> {report.comments}
                           </div>
-                        </div>
-                      )}
+                        )}
+                        {report.attachment && (
+                          <div className="small text-body mt-2">
+                            <div className="text-body-secondary">Attachment</div>
+                            <div className="d-flex align-items-center gap-2 flex-wrap">
+                              <a
+                                href={report.attachment.url}
+                                download={report.attachment.name}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="fw-semibold"
+                              >
+                                {report.attachment.name}
+                              </a>
+                              <span className="text-body-secondary">
+                                {formatFileSize(report.attachment.size)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <CBadge color="success" className="text-uppercase">
+                        {report.status}
+                      </CBadge>
                     </div>
-                    <span className="badge text-bg-light text-success border">{report.status}</span>
-                  </div>
-                </CCardBody>
-              </CCard>
-          </CCol>
-        ))}
-        <CCol md={12}>
+                  </CCardBody>
+                </CCard>
+              </CCol>
+            ))}
+          </CRow>
+        )}
+        <CCol md={12} className="mt-3">
           <CCard className="bg-body-tertiary border-dashed h-100">
             <CCardBody>
+              <div className="fw-semibold mb-3">Attach QC report</div>
               <CRow className="g-3">
+                <CCol md={4}>
+                  <CFormSelect
+                    label="Set"
+                    value={selectedSetId}
+                    onChange={(event) =>
+                      handleQcDraftChange(project.id, 'setId', event.target.value)
+                    }
+                  >
+                    <option value="">Select set</option>
+                    {sets.map((set) => (
+                      <option key={set.id} value={set.id}>
+                        {set.name}
+                      </option>
+                    ))}
+                  </CFormSelect>
+                </CCol>
+                <CCol md={4}>
+                  <CFormSelect
+                    label="Structure (optional)"
+                    value={selectedStructureName}
+                    onChange={(event) =>
+                      setQcDrafts((prev) => ({
+                        ...prev,
+                        [project.id]: {
+                          ...prev[project.id],
+                          structureName: event.target.value,
+                          assemblyName: '',
+                        },
+                      }))
+                    }
+                    disabled={!selectedSet}
+                  >
+                    <option value="">Attach to set only</option>
+                    {(selectedSet?.structures || []).map((structure) => (
+                      <option key={structure.name} value={structure.name}>
+                        {structure.name}
+                      </option>
+                    ))}
+                  </CFormSelect>
+                </CCol>
+                <CCol md={4}>
+                  <CFormSelect
+                    label="Assembly (optional)"
+                    value={draft.assemblyName || ''}
+                    onChange={(event) =>
+                      handleQcDraftChange(project.id, 'assemblyName', event.target.value)
+                    }
+                    disabled={!selectedStructure}
+                  >
+                    <option value="">Attach to structure</option>
+                    {(selectedStructure?.assemblies || []).map((assembly) => (
+                      <option key={assembly.name} value={assembly.name}>
+                        {assembly.name}
+                      </option>
+                    ))}
+                  </CFormSelect>
+                </CCol>
+              </CRow>
+              <CRow className="g-3 mt-1">
                 <CCol md={4}>
                   <CFormInput
                     label="QC title"
-                    value={qcDrafts[project.id]?.title || ''}
+                    value={draft.title || ''}
                     onChange={(event) => handleQcDraftChange(project.id, 'title', event.target.value)}
                     placeholder="e.g., Assembly torque log"
                   />
@@ -385,7 +550,7 @@ const ProductionTreeView = () => {
                 <CCol md={4}>
                   <CFormInput
                     label="Owner / Cell"
-                    value={qcDrafts[project.id]?.owner || ''}
+                    value={draft.owner || ''}
                     onChange={(event) => handleQcDraftChange(project.id, 'owner', event.target.value)}
                     placeholder="QA Cell"
                   />
@@ -393,7 +558,7 @@ const ProductionTreeView = () => {
                 <CCol md={3}>
                   <CFormSelect
                     label="Status"
-                    value={qcDrafts[project.id]?.status || ''}
+                    value={draft.status || ''}
                     onChange={(event) => handleQcDraftChange(project.id, 'status', event.target.value)}
                   >
                     <option value="">Select status</option>
@@ -412,18 +577,18 @@ const ProductionTreeView = () => {
               <CRow className="g-3 mt-1 align-items-end">
                 <CCol md={6}>
                   <CFormInput
-                    key={(qcDrafts[project.id]?.fileKey ?? project.id) + '-file-input'}
+                    key={(draft.fileKey ?? project.id) + '-file-input'}
                     type="file"
                     label="Attach QC proof (PDF, docs, images)"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*"
                     onChange={(event) => handleQcFileChange(project.id, event.target.files)}
                   />
-                  <div className="form-text">Attach the offline report file to keep it linked with the project.</div>
+                  <div className="form-text">Attach the offline report file to keep it linked with the selection.</div>
                 </CCol>
                 <CCol md={5}>
                   <CFormInput
                     label="Comments / notes"
-                    value={qcDrafts[project.id]?.comments || ''}
+                    value={draft.comments || ''}
                     onChange={(event) => handleQcDraftChange(project.id, 'comments', event.target.value)}
                     placeholder="Add reviewer notes or context"
                   />
@@ -432,9 +597,9 @@ const ProductionTreeView = () => {
             </CCardBody>
           </CCard>
         </CCol>
-      </CRow>
-    </div>
-  )
+      </div>
+    )
+  }
 
   const renderSetBreakdown = (project) => {
     const sets = getNormalizedSets(project)
@@ -445,7 +610,9 @@ const ProductionTreeView = () => {
             <div className="d-flex justify-content-between align-items-start mb-2">
               <div>
                 <div className="fw-semibold">{set.name}</div>
-                <div className="small text-body-secondary">{set.structures.length} structures</div>
+                <div className="small text-body-secondary">
+                  {set.structures.length} structures • {set.qcReports?.length || 0} QC logs
+                </div>
               </div>
               <span className="badge text-bg-secondary">{set.status}</span>
             </div>
@@ -455,7 +622,9 @@ const ProductionTreeView = () => {
                   <div className="d-flex justify-content-between align-items-start">
                     <div>
                       <div className="fw-semibold">{structure.name}</div>
-                      <div className="small text-body-secondary">Assemblies</div>
+                      <div className="small text-body-secondary">
+                        Assemblies • {structure.qcReports?.length || 0} QC logs
+                      </div>
                     </div>
                     <span className="badge text-bg-light border">{structure.status}</span>
                   </div>
@@ -464,6 +633,7 @@ const ProductionTreeView = () => {
                       <span key={assembly.name} className="badge text-bg-light border">
                         {assembly.name}
                         <small className="ms-2 text-muted">{assembly.status}</small>
+                        <small className="ms-2 text-body-secondary">{assembly.qcReports?.length || 0} QC</small>
                       </span>
                     ))}
                     {structure.assemblies.length === 0 && (
